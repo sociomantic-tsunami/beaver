@@ -1,0 +1,83 @@
+#!/bin/sh
+
+# Overrideable configuration
+PUBLISH=${PUBLISH:-true}
+OVERRIDE=${OVERRIDE:-false}
+DIST=${DIST:-xenial} # Normally set by Travis
+
+# BINTRAY_USER and BINTRAY_API_KEY must be always present
+
+
+die()
+{
+	echo "Error: $@" >&2
+	exit 1
+}
+
+test -z "$BINTRAY_USER" &&
+	die "No BINTRAY_USER environment variable defined!"
+
+bt()
+{
+	cmd="$1"
+	shift
+	# Dummy config to avoid jfrog to stop and ask questions...
+	jfrog bt config --user=nobody --key=nokey --licenses=nolicense
+	echo jfrog bt "$cmd" "$@"
+	jfrog bt "$cmd" --user="$BINTRAY_USER" --key="$BINTRAY_API_KEY" "$@"
+}
+
+
+# Parse arguments
+################################################################################
+
+test "$#" -lt 3 &&
+	die "Usage: $0 TAG SUBJECT/REPO/PACKAGE FILE..."
+
+tag=$1
+dst="$2/$tag"
+shift 2
+
+test "$(git cat-file -t refs/tags/$tag)" != "tag" &&
+	die "VERSION $tag should be a valid git annotated tag!"
+
+
+# Create version
+################################################################################
+bt version-create \
+		--desc="$(git for-each-ref --format "%(contents:subject)" \
+			"refs/tags/$tag")" \
+		--vcs-tag="$tag" \
+		--released="$(git for-each-ref \
+			--format "%(taggerdate:format:%FT%H:%M:%S.000Z)" \
+			"refs/tags/$tag")" \
+		"$dst" 2> /tmp/bt-version-create.errors
+# We don't consider conflicts as errors, since we have a race condition in
+# matrix builds
+if test "$?" -ne 0
+then
+	cat /tmp/bt-version-create.errors >&2
+	grep -q '^\[Error\] Bintray response: 409 Conflict' \
+			/tmp/bt-version-create.errors ||
+		die "Could not create version $dst!"
+fi
+
+
+# Upload files
+################################################################################
+
+component="release"
+if echo "$tag" | grep -q -- '.\+-.\+'; then
+	component="prerelease"
+fi
+
+for f in "$@"
+do
+	bt upload \
+			--publish="$PUBLISH" \
+			--override="$OVERRIDE" \
+			--deb="$DIST/$component/$(echo "$f" | \
+				sed 's|^.*_\([^_]\+\)\.deb$|\1|')" \
+			"$f" "$dst" ||
+		die "Could not upload file $f to $dst!"
+done
