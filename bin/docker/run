@@ -14,7 +14,10 @@ beaver_vars="DIST BINTRAY_USER BINTRAY_KEY"
 exported_env_vars="$travis_vars $beaver_vars $BEAVER_DOCKER_VARS"
 docker_env_var_args=$(echo $exported_env_vars | sed -n 's/\([^ ]\+\)/-e \1/gp')
 
+# Current user ID
+uid="$(id -u)"
+
 # Run the actual command
 set -x
-docker run -ti --rm -v "$HOME:$HOME" -v "$PWD:$PWD" -w "$PWD" -u "$(id -u)" \
+docker run -ti --rm -v "$HOME:$HOME" -v "$PWD:$PWD" -w "$PWD" -u "$uid" \
 	$docker_env_var_args beaver "$@"
