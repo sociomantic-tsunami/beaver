@@ -10,8 +10,8 @@
 # Defaults
 dest="$TRAVIS_SLUG/$(basename "$TRAVIS_SLUG")"
 dist=${DIST:-$(lsb_release -cs)}
-user="$BEAVER_BINTRAY_USER"
-pass="$BEAVER_BINTRAY_KEY"
+user="$BINTRAY_USER"
+pass="$BINTRAY_KEY"
 publish=true
 override=false
 comp_release=release
@@ -42,10 +42,10 @@ Options:
 	"$dist" currently)
 -u USER
 	bintray user to use to upload files (by default taken from
-	\$BEAVER_BINTRAY_USER)
+	\$BINTRAY_USER)
 -k KEY
 	bintray API key to use to upload files (by default taken from
-	\$BEAVER_BINTRAY_KEY)
+	\$BINTRAY_KEY)
 -P
 	don't publish uploaded packages (packages are published by default)
 -o
@@ -130,11 +130,9 @@ test -z "$dist" &&
 	usage_die "You must specify -D DEST if \$DIST is not present and " \
 		"there is no working lsb_release command!"
 test -z "$user" &&
-	usage_die "You must specify -u USER if \$BEAVER_BINTRAY_USER is not " \
-		"present!"
+	usage_die "You must specify -u USER if \$BINTRAY_USER is not present!"
 test -z "$key" &&
-	usage_die "You must specify -k KEY if \$BEAVER_BINTRAY_KEY is not " \
-		"present!"
+	usage_die "You must specify -k KEY if \$BINTRAY_KEY is not present!"
 test -z "$comp_release" &&
 	usage_die "-r NAME should not be empty!"
 test -z "$comp_prerelease" &&
