@@ -130,3 +130,42 @@ conventions.
 This script just builds the image for now, but if the `$DIST` environment
 variable is defined, then it looks for the `Dockerfile.$DIST` file instead of
 the regular `Dockerfile`.
+
+Bintray
+-------
+
+To upload Debian packages to Bintray use the `beaver bintray upload` command. By
+default you only need to pass the path to the files to upload. The credentials
+will be obtained from `$BINTRAY_USER` and `$BINTRAY_KEY` environment variables
+and the destination to `org/repo/repo` where `org` is the GitHub
+organization/user and `repo` is the GitHub repo name (this is obtained from
+`$TRAVIS_SLUG`). By default the current tag being buit is used as the version
+(from `$TRAVIS_TAG`).
+
+Files are put in the debian repository `$DIST/(pre)release/ARCH` where `$DIST`
+can also be overriden via command-line arguments and if not present at all
+defaults to `$(lsb_release -cs)`, releases are put in the `release` components
+and pre-releases (tags with a `-` as per [SemVer]() specification) in the
+`prerelease` component. Finally `ARCH` is the architecture and is calculated
+from the Debian package file name (normally packages end with `_ARCH.deb`), but
+can also be overriden via command-line arguments.
+
+For more options and a more in-depth description of defaults run `beaver bintray
+upload -h` for online help.
+
+The most common way to upload files is to add this to your `.travis.yml`:
+
+```yml
+deploy:
+    provider: script
+    script: beaver bintray upload *.deb # Put the right locatio here
+    skip_cleanup: true
+    on:
+        tags: true
+```
+
+And then define `$BINTRAY_USER` and `$BINTRAY_KEY` as secret/encrypted
+repository environment variables.
+
+Travis already have a provider for deploying to bintray, but it is extremely
+inconvenient as it requires to produce one json file per file to upload.
