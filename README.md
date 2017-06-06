@@ -136,6 +136,12 @@ beaver run
 
 This is just a convenience shortcut for `beaver docker run`.
 
+beaver make
+-----------
+
+This is a convenience shortcut for `beaver run make -rj2` (for now, in the
+future other convenient set of options might be used).
+
 
 Bintray
 -------
