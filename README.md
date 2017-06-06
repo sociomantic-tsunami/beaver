@@ -131,6 +131,12 @@ This script just builds the image for now, but if the `$DIST` environment
 variable is defined, then it looks for the `Dockerfile.$DIST` file instead of
 the regular `Dockerfile`.
 
+beaver run
+----------
+
+This is just a convenience shortcut for `beaver docker run`.
+
+
 Bintray
 -------
 
