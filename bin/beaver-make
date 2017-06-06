@@ -1,0 +1,6 @@
+#!/bin/sh
+set -x
+
+d="$(dirname $0)"
+
+"$d/beaver" run make -rj2 "$@"
