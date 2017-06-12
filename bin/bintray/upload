@@ -17,7 +17,26 @@ publish=true
 override=false
 comp_release=release
 comp_prerelease=prerelease
+in_docker=true
 arch=
+
+
+# If we run inside docker, just forward the command
+# Normally we run inside docker because it's assumed the used docker image will
+# have the jfrog tool
+for a in "$@"
+do
+	if test "$a" = "-N"
+	then
+		in_docker=false
+		break
+	fi
+done
+if $in_docker
+then
+	beaver run "$0" -N "$@"
+	exit $?
+fi
 
 
 # Command usage string / help
@@ -58,6 +77,8 @@ Options:
 -a ARCH
 	name of the Debian architecture to upload to (default: auto-detect from
 	file name)
+-N
+	don't run inside docker (by default this command runs inside docker)
 -h
 	show this help message and exit
 EOT
@@ -98,7 +119,7 @@ bt()
 # Parse arguments
 ################################################################################
 
-while getopts t:d:D:u:k:Por:p:a:h arg
+while getopts t:d:D:u:k:Por:p:a:Nh arg
 do
 	case "$arg" in
 		t) tag="$OPTARG" ;;
@@ -111,6 +132,7 @@ do
 		r) comp_release="$OPTARG" ;;
 		p) comp_prerelease="$OPTARG" ;;
 		p) arch="$OPTARG" ;;
+		N) in_docker=false ;; # This was already parsed, but still
 		h) usage ; exit 0 ;;
 		\?) usage_die ;;
 	esac
