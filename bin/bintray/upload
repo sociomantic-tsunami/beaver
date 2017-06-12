@@ -12,7 +12,7 @@ tag="$TRAVIS_TAG"
 dest="$TRAVIS_SLUG/$(basename "$TRAVIS_SLUG")"
 dist=${DIST:-$(lsb_release -cs)}
 user="$BINTRAY_USER"
-pass="$BINTRAY_KEY"
+key="$BINTRAY_KEY"
 publish=true
 override=false
 comp_release=release
@@ -112,7 +112,7 @@ bt()
 	# Dummy config to avoid jfrog to stop and ask questions...
 	jfrog bt config --user=nobody --key=nokey --licenses=nolicense
 	echo jfrog bt "$cmd" "$@"
-	jfrog bt "$cmd" --user="$BINTRAY_USER" --key="$BINTRAY_API_KEY" "$@"
+	jfrog bt "$cmd" --user="$user" --key="$key" "$@"
 }
 
 
