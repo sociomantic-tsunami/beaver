@@ -141,6 +141,10 @@ test -z "$comp_prerelease" &&
 # Append the tag to the destination for bintray
 dest="$dest/$tag"
 
+# Check the presence of the jfrog tool
+jfrog --help > /dev/null ||
+	exit $?
+
 
 # Create version
 ################################################################################
