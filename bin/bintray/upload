@@ -8,6 +8,7 @@
 
 
 # Defaults
+tag="$TRAVIS_TAG"
 dest="$TRAVIS_SLUG/$(basename "$TRAVIS_SLUG")"
 dist=${DIST:-$(lsb_release -cs)}
 user="$BINTRAY_USER"
