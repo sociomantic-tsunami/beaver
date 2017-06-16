@@ -9,7 +9,7 @@
 
 # Defaults
 tag="$TRAVIS_TAG"
-dest="$TRAVIS_SLUG/$(basename "$TRAVIS_SLUG")"
+dest="$TRAVIS_REPO_SLUG/$(basename "$TRAVIS_REPO_SLUG")"
 dist=${DIST:-$(lsb_release -cs)}
 user="$BINTRAY_USER"
 key="$BINTRAY_KEY"
@@ -55,7 +55,7 @@ Options:
 -d DEST
 	destination in the form of <subject>/<repo>/<package> as defined by
 	bintray (default: <org>/<repo>/<repo> taken from GitHub information
-	in \$TRAVIS_SLUG, "$dest" currently)
+	in \$TRAVIS_REPO_SLUG, "$dest" currently)
 -D DIST
 	name of the Debian distribution to upload packages to (default: taken
 	from \$DIST if present, otherwise calculated via \$(lsb_release -cs),
@@ -147,7 +147,7 @@ test -z "$tag" &&
 test "$(git cat-file -t refs/tags/$tag)" != "tag" &&
 	usage_die "'$tag' should be a valid git annotated tag!"
 echo "$dest" | grep -qv '^.\+/.\+/.\+$' &&
-	usage_die "You must specify -d DEST if \$TRAVIS_SLUG is not present " \
+	usage_die "You must specify -d DEST if \$TRAVIS_REPO_SLUG is not present " \
 		"(got '$dest')!"
 test -z "$dist" &&
 	usage_die "You must specify -D DEST if \$DIST is not present and " \
