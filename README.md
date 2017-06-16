@@ -151,7 +151,7 @@ default you only need to pass the path to the files to upload. The credentials
 will be obtained from `$BINTRAY_USER` and `$BINTRAY_KEY` environment variables
 and the destination to `org/repo/repo` where `org` is the GitHub
 organization/user and `repo` is the GitHub repo name (this is obtained from
-`$TRAVIS_SLUG`). By default the current tag being buit is used as the version
+`$TRAVIS_REPO_SLUG`). By default the current tag being buit is used as the version
 (from `$TRAVIS_TAG`).
 
 Files are put in the debian repository `$DIST/(pre)release/ARCH` where `$DIST`
