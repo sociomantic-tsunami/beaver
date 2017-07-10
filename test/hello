@@ -11,3 +11,8 @@ if test -n "$DIST"
 then
 	test "$DIST" = "$(lsb_release -cs)"
 fi
+
+# Some encoding tests
+test "$LC_ALL" = "C.UTF-8"
+test "$LANG" = "C.UTF-8"
+python3 -c 'import sys; assert sys.stdout.encoding == "UTF-8"'

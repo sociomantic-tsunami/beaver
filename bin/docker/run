@@ -7,7 +7,7 @@ set -e
 
 # Environment variables to export (Travis-defined + BEAVER_DOCKER_VARS)
 env_vars="$(printenv -0 | sed -zn 's/^\([^=]\+\)=.*$/\1\n/p')"
-travis_vars="USER HOME LANG LC_ALL DEBIAN_FRONTEND \
+travis_vars="USER HOME DEBIAN_FRONTEND \
 	RAILS_ENV RACK_ENV MERB_ENV JRUBY_OPTS JAVA_HOME \
 	CI CONTINUOUS_INTEGRATION $(echo "$env_vars" | grep '^TRAVIS')"
 beaver_vars="DIST BINTRAY_USER BINTRAY_KEY"
@@ -20,4 +20,4 @@ uid="$(id -u)"
 # Run the actual command
 set -x
 docker run -ti --rm -v "$HOME:$HOME" -v "$PWD:$PWD" -w "$PWD" -u "$uid" \
-	$docker_env_var_args beaver "$@"
+	-e LANG=C.UTF-8 -e LC_ALL=C.UTF-8 $docker_env_var_args beaver "$@"
