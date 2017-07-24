@@ -8,7 +8,7 @@
 # runs the test provided as argument
 set -eu
 
-export PATH="$PWD/bin:$PATH" TRAVIS=1
+export PATH="$PWD/bin:$PATH"
 
 if test $# -eq 0
 then

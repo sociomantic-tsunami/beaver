@@ -9,7 +9,7 @@ set -e
 env_vars="$(printenv -0 | sed -zn 's/^\([^=]\+\)=.*$/\1\n/p' | tr -d '\0')"
 travis_vars="USER HOME DEBIAN_FRONTEND \
 	RAILS_ENV RACK_ENV MERB_ENV JRUBY_OPTS JAVA_HOME \
-	CI CONTINUOUS_INTEGRATION $(echo "$env_vars" | grep '^TRAVIS')"
+	CI CONTINUOUS_INTEGRATION $(echo "$env_vars" | { grep '^TRAVIS' || true; })"
 beaver_vars="DIST"
 exported_env_vars="$travis_vars $beaver_vars $BEAVER_DOCKER_VARS"
 docker_env_var_args=$(echo $exported_env_vars | sed -n 's/\([^ ]\+\)/-e \1/gp')
