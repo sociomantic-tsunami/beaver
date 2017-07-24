@@ -6,7 +6,7 @@
 set -e
 
 # Environment variables to export (Travis-defined + BEAVER_DOCKER_VARS)
-env_vars="$(printenv -0 | sed -zn 's/^\([^=]\+\)=.*$/\1\n/p')"
+env_vars="$(printenv -0 | sed -zn 's/^\([^=]\+\)=.*$/\1\n/p' | tr -d '\0')"
 travis_vars="USER HOME DEBIAN_FRONTEND \
 	RAILS_ENV RACK_ENV MERB_ENV JRUBY_OPTS JAVA_HOME \
 	CI CONTINUOUS_INTEGRATION $(echo "$env_vars" | grep '^TRAVIS')"
