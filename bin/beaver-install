@@ -7,4 +7,4 @@
 d="$(dirname "$0")"
 
 # Build the docker image using .$DIST as suffix if present
-"$d/beaver" docker build -f "Dockerfile${DIST:+.$DIST}" .
+"$d/beaver" docker build -f "Dockerfile${DIST:+.$DIST}" "$@" .
