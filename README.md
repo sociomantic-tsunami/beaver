@@ -125,7 +125,9 @@ beaver install
 --------------
 
 This command is an easy entry point for projects that want to use some
-conventions.
+conventions. You can forward arguments to `docker build` by just passing the
+arguments to `beaver install` (this is handy, for example, to pass `--arg` or
+other options.
 
 This script just builds the image for now, but if the `$DIST` environment
 variable is defined, then it looks for the `Dockerfile.$DIST` file instead of
