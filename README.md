@@ -118,6 +118,9 @@ env:
 install: beaver docker build -f "docker/Dockerfile.$DIST" .
 ```
 
+You can also pass extra options to `docker` by exporting the
+`BEAVER_DOCKER_OPTS`.
+
 The docker image name is `beaver`.
 
 
