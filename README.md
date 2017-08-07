@@ -186,3 +186,109 @@ repository environment variables.
 
 Travis already have a provider for deploying to bintray, but it is extremely
 inconvenient as it requires to produce one json file per file to upload.
+
+
+Building D1/2 projects
+----------------------
+
+Beaver provides some facilities to build D1 projects that are compatible with D2
+easily.
+
+This assumes you are using:
+
+- [MakD](https://github.com/sociomantic-tsunami/makd) (it might work for
+  other build systems that use Make though).
+- [Cachalot](https://github.com/sociomantic-tsunami/cachalot) `dlang` docker
+  images.
+
+There are 2 main possible setups:
+
+1. Use the DMD provided by default by the image for some branch (dmd1,
+   dmd-transitional or dmd). This method is only encouraged for unstable,
+   bleeding-edge projects.
+
+2. Specify a particular DMD version. Recommended especially for libraries that
+   need to keep compatibility with multiple DMD versions, even among major
+   branches.
+
+Both approaches can be combined with Travis matrix builds, and in the following
+examples, matrix will always be used because is the more general case, but to do
+single builds just move the environment variables definition from `matrix:` to
+`global:` and that's it.
+
+Here is an example for case 1:
+
+```yml
+env:
+    matrix:
+        - DMD=dmd1
+        - DMD=dmd-transitional
+
+install: beaver dlang install
+
+script: beaver dlang make
+```
+
+`beaver dlang install` accepts arbitrary arguments that will be forwarded
+directly to the `beaver docker build` call.
+
+`beaver dlang make` by default runs the targets `test`, but you can override it
+by providing arguments. These arguments will be forwarded to `make` directly if
+provided. This command will **always** first run `make d2conv` if there is a D2
+compiler specified.
+
+For example, to get verbose output for some PR for debugging reasons, you could
+use `beaver dlang make V=1 test`.
+
+To specify a version explicitly (case 2) you can use the same commands, but just
+specify the version in the `$DMD` variable:
+
+```yml
+env:
+    matrix:
+        - DMD=1.079.0
+        - DMD=1.080.0
+        - DMD=2.070.2.s10
+        - DMD=2.070.2.s12
+        - DMD=2.074.0-0
+```
+
+In this case beaver will find out which is the package name to install and
+install that specific version. The rest of the `.travis.yml` file stays the
+same.
+
+Then you'll also need to manage the installation of the package itself when
+building the docker images for the testing environment. For this, you need to
+specify an [argument](https://docs.docker.com/engine/reference/builder/#arg) to
+pass to the image. This argument, called `DMD_PKG`, will be automatically passed
+to `docker build` by `beaver dlang install` and will hold the DMD apt package to be installed in
+a format that is compatible with `apt-get install`, including the version when
+appropriate. The `DMD_PKG` argument is calculated automatically based on the
+contents of the `DMD` environment variable, you just need to accept it and use
+it in your build script.
+
+Here is an example `Dockerfile`:
+
+```dockerfile
+FROM sociomantictsunami/dlang:xenial-v2
+ARG DMD_PKG
+ENV DMD_PKG="$DMD_PKG"
+COPY docker/build /
+RUN /build && rm /build
+```
+
+Then your `docker/build` script should just do something like:
+
+```sh
+apt-get update && apt-get -f install $DMD_PKG
+```
+
+Note that `$DMD_PKG` is not surrounded by quotes, since in the cases where the
+default provided by the image is chosen, it will actually expand to nothing, so
+you don't want to actually install anything, otherwise the package could be
+upgraded.
+
+The `beaver dlang make` command also uses some utilities that could come handy
+if you want to write a custom build script. Take a look at the `lib/dlang.sh`
+file, you'll find the utility functions with documentation in there.
+

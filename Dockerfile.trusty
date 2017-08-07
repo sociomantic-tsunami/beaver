@@ -4,4 +4,7 @@
 # http://www.boost.org/LICENSE_1_0.txt)
 #
 # This Dockerfile is just for testing
-FROM sociomantictsunami/base:trusty-v2
+FROM sociomantictsunami/dlang:trusty-v2
+ARG DMD_PKG
+ENV DMD_PKG="$DMD_PKG"
+RUN apt-get update && apt-get -y install $DMD_PKG

@@ -23,12 +23,13 @@ env:
         - PATH="$TRAVIS_BUILD_DIR/bin:$PATH"
 
     matrix:
-        - DIST=
-        - DIST=trusty
-        - DIST=xenial
+        - DIST=       DMD=dmd-transitional
+        - DIST=trusty DMD=dmd1
+        - DIST=xenial DMD=2.070.2.s12
 
 install:
-    - beaver install
+    - beaver dlang install
 
 script:
     - beaver docker run test/hello
+    - beaver dlang make
