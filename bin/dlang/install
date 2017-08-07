@@ -1,0 +1,20 @@
+#!/bin/sh
+# Copyright sociomantic labs GmbH 2017.
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt)
+#
+# Build a docker image for D projects
+set -eu
+
+# Package name deduced based on supplied DMD version
+case "$DMD" in
+    dmd*   ) PKG= ;;
+    1.*    ) PKG="dmd1=$DMD-$DIST" ;;
+    2.*.s* ) PKG="dmd-transitional=$DMD-$DIST" ;;
+    2.*    ) PKG="dmd-bin=$DMD" ;;
+    *      ) echo "Unknown \$DMD ($DMD)" >&2; false ;;
+esac
+
+# Build the docker image using .$DIST as suffix if present
+"$(dirname "$0")/../beaver" install --build-arg "DMD_PKG=$PKG" "$@"
