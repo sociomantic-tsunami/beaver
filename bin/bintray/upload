@@ -34,7 +34,8 @@ do
 done
 if $in_docker
 then
-	beaver run "$0" -N "$@"
+    export BEAVER_DOCKER_VARS="$BEAVER_DOCKER_VARS BINTRAY_USER BINTRAY_KEY"
+    beaver run "$0" -N "$@"
 	exit $?
 fi
 
