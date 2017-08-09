@@ -23,13 +23,24 @@ env:
         - PATH="$TRAVIS_BUILD_DIR/bin:$PATH"
 
     matrix:
+        - SINGLE=true
         - DIST=       DMD=dmd-transitional
         - DIST=trusty DMD=dmd1
         - DIST=xenial DMD=2.070.2.s12
 
-install:
-    - beaver dlang install
+install: |
+    set -e
+    if test -z "$SINGLE"
+    then
+        beaver dlang install
+    fi
 
-script:
-    - beaver docker run test/hello
-    - beaver dlang make
+script: |
+    set -e
+    if test -z "$SINGLE"
+    then
+        beaver docker run test/hello
+        beaver dlang make
+    else
+        test/single-tests
+    fi
