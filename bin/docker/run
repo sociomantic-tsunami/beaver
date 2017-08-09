@@ -19,6 +19,6 @@ uid="$(id -u)"
 
 # Run the actual command
 set -x
-docker run -ti --rm -v "$HOME:$HOME" -v "$PWD:$PWD" -w "$PWD" -u "$uid" \
+docker run --rm -v "$HOME:$HOME" -v "$PWD:$PWD" -w "$PWD" -u "$uid" \
 	-e LANG=C.UTF-8 -e LC_ALL=C.UTF-8 $docker_env_var_args \
 	$BEAVER_DOCKER_OPTS beaver "$@"
