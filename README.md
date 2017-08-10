@@ -306,36 +306,33 @@ In this case beaver will find out which is the package name to install and
 install that specific version. The rest of the `.travis.yml` file stays the
 same.
 
-Then you'll also need to manage the installation of the package itself when
-building the docker images for the testing environment. For this, you need to
-specify an [argument](https://docs.docker.com/engine/reference/builder/#arg) to
-pass to the image. This argument, called `DMD_PKG`, will be automatically passed
-to `docker build` by `beaver dlang install` and will hold the DMD apt package to be installed in
-a format that is compatible with `apt-get install`, including the version when
-appropriate. The `DMD_PKG` argument is calculated automatically based on the
-contents of the `DMD` environment variable, you just need to accept it and use
-it in your build script.
+When using this command, you will need to use the `beaver.Dockerfile` feature
+mentioned in the `beaver install` section. All mentioned there applies to this
+command too, except that there is no fallback to `Dockerfile.$DIST`, since there
+are many steps needed to setup the image automatically.
 
-Here is an example `Dockerfile`:
+It will install the DMD version as requested via the `DMD` environment
+variable (by injecting the `DMD_PKG` docker argument and environment variable to
+the docker image generation, as well as calling `apt-get update && apt-get
+install` with the requested DMD version for you.
+
+This means you only have to take care of installing your project dependencies
+and you don't need to do an `apt-get update` before the install.
+
+Here is an example `beaver.Dockerfile` and `docker/build` script when using
+`beaver dlang install`:
 
 ```dockerfile
-FROM sociomantictsunami/dlang:xenial-v2
-ARG DMD_PKG
-ENV DMD_PKG="$DMD_PKG"
-COPY docker/build /
-RUN /build && rm /build
+FROM sociomantictsunami/dlang:v2
 ```
-
-Then your `docker/build` script should just do something like:
 
 ```sh
-apt-get update && apt-get -f install $DMD_PKG
+#!/bin/sh
+apt-get install -f libwhatever-dev tool
 ```
 
-Note that `$DMD_PKG` is not surrounded by quotes, since in the cases where the
-default provided by the image is chosen, it will actually expand to nothing, so
-you don't want to actually install anything, otherwise the package could be
-upgraded.
+Again, if you don't need extra dependencies, you can completely omit the
+`docker/build` script.
 
 The `beaver dlang make` command also uses some utilities that could come handy
 if you want to write a custom build script. Take a look at the `lib/dlang.sh`

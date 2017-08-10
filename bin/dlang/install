@@ -7,14 +7,28 @@
 # Build a docker image for D projects
 set -eu
 
+beaver=$(dirname $0)/../beaver
+
 # Package name deduced based on supplied DMD version
 case "$DMD" in
     dmd*   ) PKG= ;;
     1.*    ) PKG="dmd1=$DMD-$DIST" ;;
     2.*.s* ) PKG="dmd-transitional=$DMD-$DIST" ;;
     2.*    ) PKG="dmd-bin=$DMD libphobos2-dev=$DMD" ;;
-    *      ) echo "Unknown \$DMD ($DMD)" >&2; false ;;
+    *      ) echo "Unknown \$DMD ($DMD)" >&2; exit 1 ;;
 esac
 
-# Build the docker image using .$DIST as suffix if present
-"$(dirname "$0")/../beaver" install --build-arg "DMD_PKG=$PKG" "$@"
+# Generate the Dockerfile including the DMD_PKG argument and install the
+# relevant DMD
+# XXX: --allow-downgrades should be a safer option than --force-yes, but as
+# long as we support trusty, we need to use the latter since the former is not
+# supported in trusty
+"$beaver" docker gen-dockerfile \
+        -i beaver.Dockerfile \
+        -I 'ARG DMD_PKG' -I 'ENV DMD_PKG=$DMD_PKG' \
+        -I 'RUN apt-get update && apt-get -y install --force-yes $DMD_PKG' \
+        -o beaver.Dockerfile.generated
+
+# Build the docker image from the generated Dockerfile passing DMD_PKG
+"$beaver" docker build --build-arg "DMD_PKG=$PKG" \
+        -f beaver.Dockerfile.generated "$@" .
