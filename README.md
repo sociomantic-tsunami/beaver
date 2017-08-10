@@ -132,9 +132,58 @@ conventions. You can forward arguments to `docker build` by just passing the
 arguments to `beaver install` (this is handy, for example, to pass `--arg` or
 other options.
 
-This script just builds the image for now, but if the `$DIST` environment
-variable is defined, then it looks for the `Dockerfile.$DIST` file instead of
-the regular `Dockerfile`.
+This command will look for a `beaver.Dockerfile` in your project and use it to
+generate a `Dockerfile` if none is present. By using a `beaver.Dockerfile` you
+can just use one docker image building specification for multiple base Ubuntu
+distributions (this command assumes you are using
+[Cachalot](https://github.com/sociomantic-tsunami/cachalot)-style images,
+meaning the image tag should have the form `DIST-VERSION`).
+
+Your `beaver.Dockerfile` only needs to define a `FROM` line in a special way,
+only using as the tag, the image version **without** the distribution name.
+So if you want to use `sociomantictsunami/dlang:{trusty,xenial}-v2`, you
+should use:
+
+```dockerfile
+FROM sociomantictsunami/dlang:v2
+```
+
+Of course you can use other `Dockerfile` instructions here as needed.
+
+The `beaver install` command will automatically *inject* the appropriate
+distro name and some final instructions to copy everything in the `docker/`
+directory to the image and run the `docker/build` script so you just need to
+care to write a script to build the image (make sure it is executable). In the
+script you can always use `$(lsb_release -cs)` to the what the current Ubuntu
+version is and install different packages based on that, for example.
+
+Here is a sample script:
+
+```sh
+set -xeu
+
+apt-get update
+
+if test "$(lsb_release -cs)" = trusty
+then
+    apt-get install -y python2
+else
+    apt-get install -y python3
+fi
+```
+
+You can completely omit the `docker/build` script if you don't need any extra
+build steps - if the script doesn't exist, nothing will be copied to the image
+building procedure either.
+
+The `Dockerfile` generation is performed by the `beaver docker gen-dockerfile`
+command, please read the command help (`-h`) if you want to know the process
+more in detail.
+
+If generating the `Dockerfile` is not flexible enough for you, you can always
+write a conventional, full, `Dockerfile` yourself. `beaver install` will search
+for a `Dockerfile.$DIST` (or a plain `Dockerfile` if no `$DIST` is defined)
+**before** looking for the `beaver.Dockerfile`.
 
 beaver run
 ----------
