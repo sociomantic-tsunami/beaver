@@ -4,4 +4,5 @@
 # http://www.boost.org/LICENSE_1_0.txt)
 #
 # This Dockerfile is just for testing
-FROM sociomantictsunami/dlang:xenial-v2
+FROM sociomantictsunami/dlang:v2
+RUN touch /BUILT-1-Dockerfile

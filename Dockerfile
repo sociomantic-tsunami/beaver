@@ -5,6 +5,3 @@
 #
 # This Dockerfile is just for testing
 FROM sociomantictsunami/dlang
-ARG DMD_PKG
-ENV DMD_PKG="$DMD_PKG"
-RUN apt-get update && apt-get -y install $DMD_PKG

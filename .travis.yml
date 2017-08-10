@@ -32,7 +32,7 @@ install: |
     set -e
     if test -z "$SINGLE"
     then
-        beaver dlang install
+        beaver install
     fi
 
 script: |
@@ -40,7 +40,6 @@ script: |
     if test -z "$SINGLE"
     then
         beaver docker run test/hello
-        beaver dlang make
     else
         test/single-tests
     fi
