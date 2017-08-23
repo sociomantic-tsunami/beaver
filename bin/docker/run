@@ -17,8 +17,12 @@ docker_env_var_args=$(echo $exported_env_vars | sed -n 's/\([^ ]\+\)/-e \1/gp')
 # Current user ID
 uid="$(id -u)"
 
+# Look for a suitable image name
+img="${BEAVER_DOCKER_IMG:-$(git config hub.upstream || true)}"
+img="${img:-${TRAVIS_REPO_SLUG:-beaver}}"
+
 # Run the actual command
 set -x
 docker run --rm -v "$HOME:$HOME" -v "$PWD:$PWD" -w "$PWD" -u "$uid" \
 	-e LANG=C.UTF-8 -e LC_ALL=C.UTF-8 $docker_env_var_args \
-	$BEAVER_DOCKER_OPTS beaver "$@"
+	$BEAVER_DOCKER_OPTS "$img" "$@"
