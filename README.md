@@ -284,7 +284,8 @@ directly to the `beaver docker build` call.
 `beaver dlang make` by default runs the targets `test`, but you can override it
 by providing arguments. These arguments will be forwarded to `make` directly if
 provided. This command will **always** first run `make d2conv` if there is a D2
-compiler specified.
+compiler specified (and there is no file `.D2-ready` that contains the string
+`ONLY`).
 
 For example, to get verbose output for some PR for debugging reasons, you could
 use `beaver dlang make V=1 test`.
