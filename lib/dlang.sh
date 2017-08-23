@@ -35,7 +35,13 @@ set_dc_dver() {
         *      ) echo "Unknown \$DMD ($DMD)" >&2; false ;;
     esac
 
-    export DC DVER
+    D2_ONLY=false
+    if test -r ".D2-ready" && grep -q "^ONLY$" ".D2-ready"
+    then
+        D2_ONLY=true
+    fi
+
+    export DC DVER D2_ONLY
     set $old_opts
 }
 
