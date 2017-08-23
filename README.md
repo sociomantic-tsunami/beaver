@@ -56,7 +56,15 @@ The simplest use case would be:
   ```
 
 `beaver docker build` is just a thin wrapper over `docker build` to add some
-default options (`--pull -t beaver` in particular).
+default options (`--pull -t $img` in particular).
+
+The image name will be taken from the `BEAVER_DOCKER_IMG` environment variable,
+if present. If not present it falls back to the result of `git config
+hub.upstream` (in case you are using the
+[git-hub](https://github.com/sociomantic-tsunami/git-hub) tool in the
+command-line. If that's empty too, then it will try with the `TRAVIS_REPO_SLUG`
+environment variable (in case it's running inside travis) and as a last resort
+it will simply use `beaver` as the image name.
 
 You can pass extra `docker build` options to `beaver docker build`, for example
 to use a different `Dockerfile`:
