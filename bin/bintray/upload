@@ -128,11 +128,11 @@ do
 		D) dist="$OPTARG" ;;
 		u) user="$OPTARG" ;;
 		k) key="$OPTARG" ;;
-		d) publish=false ;;
-		b) override=true ;;
+		P) publish=false ;;
+		o) override=true ;;
 		r) comp_release="$OPTARG" ;;
 		p) comp_prerelease="$OPTARG" ;;
-		p) arch="$OPTARG" ;;
+		a) arch="$OPTARG" ;;
 		N) in_docker=false ;; # This was already parsed, but still
 		h) usage ; exit 0 ;;
 		\?) usage_die ;;
