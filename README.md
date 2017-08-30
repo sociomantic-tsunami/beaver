@@ -359,6 +359,32 @@ if you want to write a custom build script. Take a look at the `lib/dlang.sh`
 file, you'll find the utility functions with documentation in there.
 
 
+### Codecov support
+
+Beaver includes a convenient wrapper to send [codecov.io](https://codecov.io/)
+reports. Just make sure the project was already built with coverage support and
+then use something like this in the `.travis.yml` file:
+
+```yml
+after_success: beaver dlang codecov [OPTIONS]
+```
+
+The `[OPTIONS]` are forwarded directly to the
+[codecov-bash](https://github.com/codecov/codecov-bash), but this script will
+run in a confined docker instance where only the coverage reports are available
+(this means no file list will be sent to codecov).
+
+Only `TRAVIS*`, `CODECOV_*` and some dlang-related (`DIST DMD DC F V` etc.)
+environment variables will be automantically passed to the docker container. If
+you want to pass any other environment variables use `BEAVER_DOCKER_VARS` as
+usual.
+
+The following environment variables are reported automatically to codecov (via
+the `-e` option): `DIST`, `DMD`, `DC`, `F`. Some other options are passed to
+codecov by default, please check the `bin/dlang/codecov` script if you are
+interested in the details.
+
+
 ### Auto-convert and release tags for D2
 
 For D1 projects that are compatible with D2, there is a special command that
@@ -418,7 +444,7 @@ env:
         # Make sure beaver is in the PATH
         - PATH="$(git config -f .gitmodules submodule.beaver.path)/bin:$PATH"
     matrix:
-        - DMD=1.081.1 DIST=xenial F=production AFTER_SCRIPT=1
+        - DMD=1.081.1 DIST=xenial F=production
         - DMD=1.081.1 DIST=xenial F=devel
         - DMD=2.071.2.s1 DIST=xenial F=production
         - DMD=2.071.2.s1 DIST=xenial F=devel
@@ -428,9 +454,9 @@ if: NOT tag =~ \+d2$
 
 install: beaver dlang install
 
-script: BEAVER_DOCKER_VARS="F AFTER_SCRIPT" beaver dlang make
+script: beaver dlang make
 
-after_success: test "$AFTER_SCRIPT" = "1" && beaver run ci/codecov.sh
+after_success: beaver dlang codecov
 
 jobs:
     include:
