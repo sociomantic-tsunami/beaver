@@ -42,7 +42,7 @@ build()
 	"$beaver" dlang make "$@"
 }
 
-MATRIX=${MATRIX:--1}
+MATRIX=${MATRIX:-0}
 if test "$MATRIX" = "*"
 then
 	yaml2json < .travis.yml | jq ".env.matrix | .[]" | while read matrix
