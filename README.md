@@ -273,6 +273,8 @@ examples, matrix will always be used because is the more general case, but to do
 single builds just move the environment variables definition from `matrix:` to
 `global:` and that's it.
 
+### Case 1
+
 Here is an example for case 1:
 
 ```yml
@@ -289,17 +291,33 @@ script: beaver dlang make
 `beaver dlang install` accepts arbitrary arguments that will be forwarded
 directly to the `beaver docker build` call.
 
-`beaver dlang make` by default runs the targets `test`, but you can override it
-by providing arguments. These arguments will be forwarded to `make` directly if
-provided. This command will **always** first run `make d2conv` if there is a D2
-compiler specified (and there is no file `.D2-ready` that contains the string
-`ONLY`).
+`beaver dlang make` by default (when invoked with no arguments) will the
+following:
+
+1. `make d2conv` (if there is a D2 compiler specified and there is no file
+    `.D2-ready` that contains the string `ONLY`).
+
+2. `make` (without arguments to build the default target).
+
+3. `make unittest` (and upload coverage reports to codecov, if any, using
+   `beaver dlang codecov`, see *Codecov support* for more details).
+
+4. `make integrationtest`.
+
+When called with arguments, it will simply do one `make` call with those
+arguments, without calling `make d2conv` automatically (but setting all
+D-related environment variables appropriately).
 
 For example, to get verbose output for some PR for debugging reasons, you could
 use `beaver dlang make V=1 test`.
 
-To specify a version explicitly (case 2) you can use the same commands, but just
-specify the version in the `$DMD` variable:
+If you want to set some variable but still get the default `make` sequence, you
+can simply export those variables via `BEAVER_DOCKER_VARS`.
+
+### Case 2
+
+To specify a version explicitly you can use the same commands, but just specify
+the version in the `$DMD` variable:
 
 ```yml
 env:

@@ -15,8 +15,8 @@ endif
 all:
 	echo 'We just made "all"' > make-all.stamp
 
-test:
-	echo 'We just made "test"' > make-test.stamp
+unittest integrationtest:
+	echo 'We just made "$@"' > make-$@.stamp
 
 d2conv:
 	echo 'We just made "d2conv"' > make-d2conv.stamp

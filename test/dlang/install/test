@@ -13,7 +13,8 @@ do
     cat beaver.Dockerfile.generated
     rm beaver.Dockerfile.generated
     beaver dlang make
-    for f in make-all.stamp make-test.stamp make-d2conv.stamp
+    for f in make-all.stamp make-unittest.stamp make-integrationtest.stamp \
+            make-d2conv.stamp
     do
         test -f "$f"
         rm "$f"

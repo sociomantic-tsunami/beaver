@@ -7,15 +7,9 @@
 # Build D applications
 set -eu
 
-# Set default arguments if none are passed
-if test $# -eq 0
-then
-    set -- all test
-fi
-
 # Paths
-r=$(dirname $0)/../..
-beaver=$r/bin/beaver
+r="$(readlink -f $(dirname $0)/../..)"
+beaver="$r/bin/beaver"
 
 # Use general dlang utilities
 . $r/lib/dlang.sh
@@ -24,11 +18,37 @@ beaver=$r/bin/beaver
 set_dc_dver
 export BEAVER_DOCKER_VARS="${BEAVER_DOCKER_VARS:-} DMD DC DVER D2_ONLY F V"
 
+# We have arguments, forward to make and exit
+if test $# -gt 0
+then
+    # Just forward the make call
+    exec "$beaver" make "$@"
+fi
+
+# No argumets, run a default build
+
 # First convert code if we are building a D2 version of a D1/2 project
 if test "$D2_ONLY" = false -a "$DVER" -eq 2
 then
-    $beaver make d2conv
+    "$beaver" make d2conv
 fi
 
-# Then just build
-$beaver make "$@"
+# Build default target
+"$beaver" make all
+
+# Test and upload coverage reports
+test_cov()
+{
+    what="$1"
+    "$beaver" make "$what"
+    "$beaver" dlang codecov -n "$what" -F "$what"
+    rm -f .*.lst
+}
+
+test_cov unittest
+
+# XXX: Disabled for now because only the last integration test results will be
+#      uploaded until MakD can make sure integrationtest reports are stored
+#      separately. See: https://github.com/sociomantic-tsunami/makd/issues/107
+#test_cov integrationtest
+"$beaver" make integrationtest
