@@ -44,7 +44,7 @@ cp -av "$r/bin/codecov-bash" "$tmp/codecov"
 
 # Run codecov in the confined environment
 cd "$tmp"
-"$beaver" run ./codecov -Z -n beaver -s reports -e DIST,DMD,DC,F \
+"$beaver" run ./codecov -n beaver -s reports -e DIST,DMD,DC,F \
     -F $F,$DIST,dmd_$(echo $DMD | tr '~+.-' ____ ) \
     -X gcov -X coveragepy -X xcode \
     "$@"

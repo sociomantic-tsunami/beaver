@@ -16,7 +16,7 @@ all:
 	test -f /BUILT-1-Dockerfile -a -f /BUILT-2-build
 	echo 'We just made "all"' > make-all.stamp
 
-test:
+unittest integrationtest:
 	$(DC) -run hello.d
 	dmd --version | grep -q 2.067.1
-	echo 'We just made "test"' > make-test.stamp
+	echo 'We just made "$@"' > make-$@.stamp

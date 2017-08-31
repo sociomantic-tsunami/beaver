@@ -11,7 +11,7 @@ beaver dlang install
 cat beaver.Dockerfile.generated
 rm beaver.Dockerfile.generated
 beaver dlang make
-for f in make-all.stamp make-test.stamp
+for f in make-all.stamp make-unittest.stamp make-integrationtest.stamp
 do
     test -f "$f"
     rm "$f"
