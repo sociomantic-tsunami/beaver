@@ -95,14 +95,17 @@ transform_from()
 {
     # Regular expression to use to extract info from the FROM line using sed
     # \1 is the FROM and initial spaces
-    # \2 is the image name
-    # \5 is the tag name (if any)
-    # \6 is the trailing spaces or comments (if any)
-    from_sed_re='^(\s*FROM\s+)(\w+(\/\w+)?)(:(\w+))?(\s*(#.*)?)$'
+    # \2 is the "user/repository" part
+    # \3 is the "/repository" with the leading "/" (if any)
+    # \4 is the ":tag" with the leading ":" (if any)
+    # \5 is the "tag" (if any)
+    # \6 is the trailing spaces and comment (if any)
+    # \7 is the comment (if any)
+    from_sed_re='^(\s*FROM\s+)([^/:#[:space:]]+(/[^:#[:space:]]+)?)(:([^#[:space:]]+))?(\s*(#.*)?)$'
 
     # Inject the DIST part to the tag, only if there was a tag
-    tag="$(echo "$1" | sed -rn "s/$from_sed_re/\\5/ip")"
-    echo "$1" | sed -r "s/$from_sed_re/\\1\\2${tag:+:$docker_dist-}\\5\\6/i"
+    tag="$(echo "$1" | sed -rn "s|$from_sed_re|\\5|ip")"
+    echo "$1" | sed -r "s|$from_sed_re|\\1\\2${tag:+:$docker_dist-}\\5\\6|i"
 }
 
 # Do our thing

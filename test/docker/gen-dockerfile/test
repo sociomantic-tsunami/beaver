@@ -8,7 +8,22 @@ set -xeu
 # Test help
 beaver docker gen-dockerfile -h | grep 'Usage:'
 
+# Test FROM lines
+export DIST=xenial
+echo -n > from.output
+oldIFS="$IFS"
+IFS=
+while read i
+do
+    echo "$i" | beaver docker gen-dockerfile -i - | head -n1 >> from.output
+done < from.input
+IFS="$oldIFS"
+cat from.output
+diff -u from.expected from.output
+rm from.output
+
 # Test basic usage
+export DIST=
 beaver docker gen-dockerfile > Dockerfile
 cat Dockerfile
 grep -q "FROM.*:$(lsb_release -cs)-v2" Dockerfile # Check for the host's DIST
