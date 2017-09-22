@@ -20,13 +20,10 @@ esac
 
 # Generate the Dockerfile including the DMD_PKG argument and install the
 # relevant DMD
-# XXX: --allow-downgrades should be a safer option than --force-yes, but as
-# long as we support trusty, we need to use the latter since the former is not
-# supported in trusty
 "$beaver" docker gen-dockerfile \
         -i beaver.Dockerfile \
         -I 'ARG DMD_PKG' -I 'ENV DMD_PKG=$DMD_PKG' \
-        -I 'RUN apt-get update && apt-get -y install --force-yes $DMD_PKG' \
+        -I 'RUN apt update && apt -y install --allow-downgrades $DMD_PKG' \
         -o beaver.Dockerfile.generated
 
 # Build the docker image from the generated Dockerfile passing DMD_PKG
