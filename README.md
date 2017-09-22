@@ -325,6 +325,17 @@ variable (by injecting the `DMD_PKG` docker argument and environment variable to
 the docker image generation, as well as calling `apt update && apt install` with
 the requested DMD version for you.
 
+Wildcards are supplied to `apt` as-is, which makes it possible to install latest
+package which version string matches:
+
+```yml
+env:
+    matrix:
+        - DMD=1.079.*
+        - DMD=2.070.2.s*
+```
+
+
 This means you only have to take care of installing your project dependencies
 and you don't need to do an `apt update` before the install.
 
