@@ -170,13 +170,13 @@ Here is a sample script:
 ```sh
 set -xeu
 
-apt-get update
+apt update
 
 if test "$(lsb_release -cs)" = trusty
 then
-    apt-get install -y python2
+    apt install -y python2
 else
-    apt-get install -y python3
+    apt install -y python3
 fi
 ```
 
@@ -322,8 +322,8 @@ are many steps needed to setup the image automatically.
 
 It will install the DMD version as requested via the `DMD` environment
 variable (by injecting the `DMD_PKG` docker argument and environment variable to
-the docker image generation, as well as calling `apt-get update && apt-get
-install` with the requested DMD version for you.
+the docker image generation, as well as calling `apt update && apt install` with
+the requested DMD version for you.
 
 Wildcards are supplied to `apt` as-is, which makes it possible to install latest
 package which version string matches:
@@ -337,7 +337,7 @@ env:
 
 
 This means you only have to take care of installing your project dependencies
-and you don't need to do an `apt-get update` before the install.
+and you don't need to do an `apt update` before the install.
 
 Here is an example `beaver.Dockerfile` and `docker/build` script when using
 `beaver dlang install`:
@@ -348,7 +348,7 @@ FROM sociomantictsunami/dlang:v2
 
 ```sh
 #!/bin/sh
-apt-get install -f libwhatever-dev tool
+apt install -f libwhatever-dev tool
 ```
 
 Again, if you don't need extra dependencies, you can completely omit the
