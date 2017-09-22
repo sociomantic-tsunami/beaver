@@ -25,7 +25,7 @@ env:
     matrix:
         - SINGLE=true
         - DIST=       DMD=dmd-transitional
-        - DIST=trusty DMD=dmd1
+        - DIST=xenial DMD=dmd1
         - DIST=xenial DMD=2.070.2.s12
 
 install: |

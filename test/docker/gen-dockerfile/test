@@ -29,7 +29,6 @@ test_basic_dist()
     beaver docker run test -f /BUILT-1.1-Dockerfile -a -f /BUILT-1.2-build
     test "$(beaver docker run lsb_release -cs)" = "$DIST"
 }
-test_basic_dist trusty
 test_basic_dist xenial
 
 # Test complex usage with all options

@@ -6,7 +6,7 @@
 set -xeu
 
 # Test basic usage
-for DIST in trusty xenial
+for DIST in xenial
 do
     export DIST DMD=2.067.1-0
     beaver dlang install
