@@ -50,7 +50,7 @@ then
 		build "$@"
 	done
 else
-	matrix="$(yaml2json < .travis.yml | jq ".env.matrix | sort | .[$MATRIX]")"
+	matrix="$(yaml2json < .travis.yml | jq ".env.matrix | .[$MATRIX]")"
 	build "$@"
 fi
 
