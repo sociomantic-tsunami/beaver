@@ -358,3 +358,91 @@ The `beaver dlang make` command also uses some utilities that could come handy
 if you want to write a custom build script. Take a look at the `lib/dlang.sh`
 file, you'll find the utility functions with documentation in there.
 
+
+### Auto-convert and release tags for D2
+
+For D1 projects that are compatible with D2, there is a special command that
+allows automatically converting to D2, tagging (using the suffix `+d2`), pushing
+to the repo and creating a GitHub release.
+
+You'll need a GitHub OAuth token to be able to push and create the release, you
+should provide it via the `$GITHUB_OAUTH_TOKEN` environment variable. This
+command also expects the variables `$DIST`, `$TRAVIS_REPO_SLUG` and
+`$TRAVIS_TAG` to be defined.
+
+The recommended way to trigger it in the `.travis.yml` is via a special stage,
+after all the rest of the tests passed, and it should be done only for tags.
+
+For example:
+
+```yml
+# Don't run the job on auto-converted tags at all
+if: NOT tag ~= \+d2$
+
+env:
+    global:
+        # This should really be added via web or the travis tool, but ENCRYPTED
+        - GITHUB_OAUTH_TOKEN=XXX
+        - DIST=xenial
+jobs:
+    include:
+        - stage: D2 Release
+          # Run only for tags, but not for auto-converted ones
+          if: tag IS present AND NOT tag ~= \+d2$
+          script: beaver dlang d2-release
+```
+
+If you use a matrix build then you might need to fix you `env:` too in the `D2
+Release` stage. Here is a slightly more complicated example using a matrix build
+and a main job using an `after_success:`:
+
+```yml
+# We will use docker to set up out environment, so don't use any particular
+# language in Travis itself
+language: generic
+
+# Enable docker
+sudo: required
+services:
+    - docker
+
+# Disable automatic submodule fetching (it's done recursively)
+git:
+    submodules: false
+
+# Do a shallow submodule fetch
+before_install: git submodule update --init
+
+env:
+    global:
+        # Make sure beaver is in the PATH
+        - PATH="$(git config -f .gitmodules submodule.beaver.path)/bin:$PATH"
+    matrix:
+        - DMD=1.081.1 DIST=xenial F=production AFTER_SCRIPT=1
+        - DMD=1.081.1 DIST=xenial F=devel
+        - DMD=2.071.2.s1 DIST=xenial F=production
+        - DMD=2.071.2.s1 DIST=xenial F=devel
+
+# Don't build tags already converted to D2
+if: NOT tag =~ \+d2$
+
+install: beaver dlang install
+
+script: BEAVER_DOCKER_VARS="F AFTER_SCRIPT" beaver dlang make
+
+after_success: test "$AFTER_SCRIPT" = "1" && beaver run ci/codecov.sh
+
+jobs:
+    include:
+        - stage: D2 Release
+          # We need to include the exclusion of D2 tags because this "if"
+          # replaces the global one
+          if: tag IS present AND NOT tag =~ \+d2$
+          # We override it, otherwise is inherited from the first matrix row,
+          # we need DIST and DMD for `beaver dlang install`
+          env: DIST=xenial DMD=2.070.2.s12
+          # before_install and install are inherited
+          script: beaver dlang d2-release
+          # Overridden to NOP, otherwise is inherited
+          after_success: true
+```
