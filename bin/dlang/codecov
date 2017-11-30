@@ -42,9 +42,22 @@ git archive --format=tar HEAD | (cd "$tmp" && tar xf -)
 cp -a .git "$tmp/"
 cp -av "$r/bin/codecov-bash" "$tmp/codecov"
 
+# Build codecov flags
+flags=
+for flag in "$F" "$DIST" "dmd_$DMD"
+do
+    # Codecov only accepts flags that match ^[\w\,]+$
+    flag="$(echo "$flag" | sed -r 's/\W/_/g')"
+    if test -z "$flags"
+    then
+        flags="-F $flag"
+    else
+        flags="$flags,$flag"
+    fi
+done
+
 # Run codecov in the confined environment
 cd "$tmp"
 "$beaver" run ./codecov -n beaver -s reports -e DIST,DMD,DC,F \
-    -F $F,$DIST,dmd_$(echo $DMD | tr '~+.-' ____ ) \
-    -X gcov -X coveragepy -X xcode \
+    $flags -X gcov -X coveragepy -X xcode \
     "$@"
