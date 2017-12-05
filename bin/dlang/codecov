@@ -44,7 +44,7 @@ cp -av "$r/bin/codecov-bash" "$tmp/codecov"
 
 # Build codecov flags
 flags=
-for flag in "$F" "$DIST" "dmd_$DMD"
+for flag in "flavour_$F" "dist_$DIST" "dmd_$DMD"
 do
     # Codecov only accepts flags that match ^[\w\,]+$
     flag="$(echo "$flag" | sed -r 's/\W/_/g')"
