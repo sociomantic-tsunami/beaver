@@ -18,5 +18,5 @@ all:
 
 unittest integrationtest:
 	$(DC) -run hello.d
-	dmd --version | grep -q 2.067.1
+	dmd --version | grep -q $(DMD)
 	echo 'We just made "$@"' > make-$@.stamp
