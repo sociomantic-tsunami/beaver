@@ -8,15 +8,18 @@ set -xeu
 # Test basic usage
 for DIST in xenial
 do
-    export DIST DMD=2.067.1-0
-    beaver dlang install
-    cat beaver.Dockerfile.generated
-    rm beaver.Dockerfile.generated
-    beaver dlang make
-    for f in make-all.stamp make-unittest.stamp make-integrationtest.stamp \
-            make-d2conv.stamp
+    for DMD in "2.067.1-*" "2.077.1-*"
     do
-        test -f "$f"
-        rm "$f"
+        export DIST DMD
+        beaver dlang install
+        cat beaver.Dockerfile.generated
+        rm beaver.Dockerfile.generated
+        beaver dlang make
+        for f in make-all.stamp make-unittest.stamp make-integrationtest.stamp \
+                make-d2conv.stamp
+        do
+            test -f "$f"
+            rm "$f"
+        done
     done
 done
