@@ -118,7 +118,7 @@ done
 if test -x "$docker_dir/$docker_build"
 then
     cat <<EOT
-    COPY $docker_dir/ /docker-tmp
-    RUN /docker-tmp/$docker_build && rm -fr /docker-tmp
+COPY $docker_dir/ /docker-tmp
+RUN /docker-tmp/$docker_build && rm -fr /docker-tmp
 EOT
 fi
