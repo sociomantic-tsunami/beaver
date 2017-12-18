@@ -151,7 +151,7 @@ echo "$dest" | grep -qv '^.\+/.\+/.\+$' &&
 	usage_die "You must specify -d DEST if \$TRAVIS_REPO_SLUG is not present " \
 		"(got '$dest')!"
 test -z "$dist" &&
-	usage_die "You must specify -D DEST if \$DIST is not present and " \
+	usage_die "You must specify -D DIST if \$DIST is not present and " \
 		"there is no working lsb_release command!"
 test -z "$user" &&
 	usage_die "You must specify -u USER if \$BINTRAY_USER is not present!"
