@@ -148,10 +148,12 @@ test -z "$tag" &&
 test "$(git cat-file -t refs/tags/$tag)" != "tag" &&
 	usage_die "'$tag' should be a valid git annotated tag!"
 echo "$dest" | grep -qv '^.\+/.\+/.\+$' &&
-	usage_die "You must specify -d DEST if \$TRAVIS_REPO_SLUG is not present " \
-		"(got '$dest')!"
+	usage_die "Invalid destination, please specify " \
+		"-d <subject>/<repo>/<package> or make sure \$TRAVIS_REPO_SLUG " \
+		"is present if you want to use the default (current invalid " \
+		"value is '$dest')!"
 test -z "$dist" &&
-	usage_die "You must specify -D DEST if \$DIST is not present and " \
+	usage_die "You must specify -D DIST if \$DIST is not present and " \
 		"there is no working lsb_release command!"
 test -z "$user" &&
 	usage_die "You must specify -u USER if \$BINTRAY_USER is not present!"
