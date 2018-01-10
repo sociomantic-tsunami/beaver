@@ -14,7 +14,7 @@ case "$DMD" in
     dmd*   ) PKG= ;;
     1.*    ) PKG="dmd1=$DMD-$DIST" ;;
     2.*.s* ) PKG="dmd-transitional=$DMD-$DIST" ;;
-    2.*    ) PKG="dmd-bin=$DMD libphobos2-dev=$DMD" ;;
+    2.*    ) PKG="dmd-bin=$DMD" ;;
     *      ) echo "Unknown \$DMD ($DMD)" >&2; exit 1 ;;
 esac
 
