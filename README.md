@@ -270,8 +270,8 @@ There are 2 main possible setups:
 
 Both approaches can be combined with Travis matrix builds, and in the following
 examples, matrix will always be used because is the more general case, but to do
-single builds just move the environment variables definition from `matrix:` to
-`global:` and that's it.
+single builds just convert the templates to a single job (or just define one
+`test-matrix` job)  and that's it.
 
 ### Case 1
 
@@ -279,14 +279,30 @@ Here is an example for case 1:
 
 ```yml
 env:
-    matrix:
-        - DMD=dmd1
-        - DMD=dmd-transitional
+    global:
+        - DIST=xenial
+        - F=production
 
+# Create docker images and setup environment to build
 install: beaver dlang install
 
-script: beaver dlang make
+# Basic config is inherited from the global scope
+jobs:
+    templates:
+        - &test-matrix
+          stage: Test
+          script: beaver dlang make
+
+    include:
+        - <<: *test-matrix
+          env: DMD=dmd1
+        - <<: *test-matrix
+          env: DMD=dmd-transitional
 ```
+
+Note that using [implicit matrix
+expansion](https://docs.travis-ci.com/user/customizing-the-build/#Build-Matrix)
+is **strongly discouraged** as it gets quite tricky when using stages.
 
 `beaver dlang install` accepts arbitrary arguments that will be forwarded
 directly to the `beaver docker build` call.
@@ -321,12 +337,31 @@ the version in the `$DMD` variable:
 
 ```yml
 env:
-    matrix:
-        - DMD=1.079.0
-        - DMD=1.080.0
-        - DMD=2.070.2.s10
-        - DMD=2.070.2.s12
-        - DMD=2.074.0-0
+    global:
+        - DIST=xenial
+        - F=production
+
+# Create docker images and setup environment to build
+install: beaver dlang install
+
+# Basic config is inherited from the global scope
+jobs:
+    templates:
+        - &test-matrix
+          stage: Test
+          script: beaver dlang make
+
+    include:
+        - <<: *test-matrix
+          env: DMD=1.079.0
+        - <<: *test-matrix
+          env: DMD=1.080.0
+        - <<: *test-matrix
+          env: DMD=2.070.2.s10
+        - <<: *test-matrix
+          env: DMD=2.070.2.s12
+        - <<: *test-matrix
+          env: DMD=2.074.0-0
 ```
 
 In this case beaver will find out which is the package name to install and
@@ -347,10 +382,13 @@ Wildcards are supplied to `apt` as-is, which makes it possible to install latest
 package which version string matches:
 
 ```yml
-env:
-    matrix:
-        - DMD=1.079.*
-        - DMD=2.070.2.s*
+jobs:
+    # templates...
+    include:
+        - <<: *test-matrix
+          env: DMD=1.079.*
+        - <<: *test-matrix
+          env: DMD=2.070.2.s*
 ```
 
 
@@ -430,6 +468,8 @@ env:
         - DIST=xenial
 jobs:
     include:
+        - stage: Test
+          script: beaver dlang make
         - stage: D2 Release
           # Run only for tags, but not for auto-converted ones
           if: tag IS present AND NOT tag ~= \+d2$
@@ -454,37 +494,47 @@ services:
 git:
     submodules: false
 
+# Global environment variables
+env:
+    global:
+        - DIST=xenial
+        # Make sure beaver is in the PATH
+        - PATH="$(git config -f .gitmodules submodule.beaver.path)/bin:$PATH"
+
 # Do a shallow submodule fetch
 before_install: git submodule update --init
 
-env:
-    global:
-        # Make sure beaver is in the PATH
-        - PATH="$(git config -f .gitmodules submodule.beaver.path)/bin:$PATH"
-    matrix:
-        - DMD=1.081.1 DIST=xenial F=production
-        - DMD=1.081.1 DIST=xenial F=devel
-        - DMD=2.071.2.s1 DIST=xenial F=production
-        - DMD=2.071.2.s1 DIST=xenial F=devel
-
-# Don't build tags already converted to D2
-if: NOT tag =~ \+d2$
-
+# Create docker images and setup environment to build
 install: beaver dlang install
 
-script: beaver dlang make
-
+# Send codecov reports
 after_success: beaver dlang codecov
 
+# Basic config is inherited from the global scope
 jobs:
+    templates:
+        - &test-matrix
+          stage: Test
+          script: beaver dlang make
+          # Don't build tags already converted to D2
+          if: NOT tag =~ \+d2$
+
     include:
+        - <<: *test-matrix
+          env: DMD=1.081.1 F=production
+        - <<: *test-matrix
+          env: DMD=1.081.1 DIST=xenial F=devel
+        - <<: *test-matrix
+          env: DMD=2.071.2.s12 DIST=xenial F=production
+        - <<: *test-matrix
+          env: DMD=2.071.2.s12 DIST=xenial F=devel
         - stage: D2 Release
           # We need to include the exclusion of D2 tags because this "if"
           # replaces the global one
           if: tag IS present AND NOT tag =~ \+d2$
           # We override it, otherwise is inherited from the first matrix row,
           # we need DIST and DMD for `beaver dlang install`
-          env: DIST=xenial DMD=2.070.2.s12
+          env: DMD=2.070.2.s12 F=production
           # before_install and install are inherited
           script: beaver dlang d2-release
           # Overridden to NOP, otherwise is inherited
