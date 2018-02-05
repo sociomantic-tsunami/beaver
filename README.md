@@ -245,6 +245,44 @@ Travis already have a provider for deploying to bintray, but it is extremely
 inconvenient as it requires to produce one json file per file to upload.
 
 
+Codecov
+-------
+
+Beaver includes a convenient wrapper to send [codecov.io](https://codecov.io/)
+reports. Just make sure the project was already built with coverage support and
+then use something like this in the `.travis.yml` file:
+
+```yml
+after_success: BEAVER_CODECOV_REPORTS="*.lst" beaver codecov [OPTIONS]
+```
+
+The `[OPTIONS]` are forwarded directly to the
+[codecov-bash](https://github.com/codecov/codecov-bash), but this script will
+run in a confined docker instance where only the coverage reports are available,
+plus the original source code as it was in Git (not the, possibly dirtly, build
+workspace).
+
+The docker images used to run the codecov script is determined by the standard
+`BEAVER_DOCKER_IMG` variable, and it is expected that this image was build
+before running `beaver codecov` (normally through the `beaver install` command
+or similar).
+
+Only `TRAVIS*` and `CODECOV_*` environment variables will be automantically
+passed to the docker container. If you want to pass any other environment
+variables use `BEAVER_DOCKER_VARS` as usual.
+
+The reports location must be passed explicitly to the script via the
+`BEAVER_CODECOV_REPORTS` environment variable. Glob patterns (like `*.lst`) and
+directories can be used (they will be copied recursively), but special
+characters are not escaped from the shell, so be careful if files have special
+characters, they must be properly escaped.
+
+Some options are passed to codecov by default (at the moment `-n beaver -s
+reports`, where `reports` is the location of the sanitized sandbox where reports
+are copied; please check the `bin/beaver-codecov` script if you are interested
+in the details).
+
+
 Building D1/2 projects
 ----------------------
 
@@ -425,20 +463,15 @@ then use something like this in the `.travis.yml` file:
 after_success: beaver dlang codecov [OPTIONS]
 ```
 
-The `[OPTIONS]` are forwarded directly to the
-[codecov-bash](https://github.com/codecov/codecov-bash), but this script will
-run in a confined docker instance where only the coverage reports are available
-(this means no file list will be sent to codecov).
+This command is based on the global `beaver codecov` command (please read the
+documentation on this command for more details), but automatically selects which
+reports to send, so you don't need to pass the `BEAVER_CODECOV_REPORTS`
+environment variable. Also some extra variables specific to D programs are
+passed and used as flags (`DIST DMD DC F V` etc.). If you want to pass any other
+environment variables use `BEAVER_DOCKER_VARS` as usual.
 
-Only `TRAVIS*`, `CODECOV_*` and some dlang-related (`DIST DMD DC F V` etc.)
-environment variables will be automantically passed to the docker container. If
-you want to pass any other environment variables use `BEAVER_DOCKER_VARS` as
-usual.
-
-The following environment variables are reported automatically to codecov (via
-the `-e` option): `DIST`, `DMD`, `DC`, `F`. Some other options are passed to
-codecov by default, please check the `bin/dlang/codecov` script if you are
-interested in the details.
+Please check the `bin/dlang/codecov` script if you are interested in the
+details.
 
 
 ### Auto-convert and release tags for D2

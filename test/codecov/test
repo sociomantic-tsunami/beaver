@@ -1,0 +1,4 @@
+#!/bin/sh
+set -exu
+
+BEAVER_CODECOV_REPORTS=. beaver codecov -d

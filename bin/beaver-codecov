@@ -1,0 +1,50 @@
+#!/bin/sh
+# Copyright sociomantic labs GmbH 2017.
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt)
+#
+# Report codecoverage via codecov in a sandboxed environment.
+#
+# This command is just a wrapper to codecov-bash
+# (https://github.com/codecov/codecov-bash) that runs inside docker and with
+# a fixed version of the script. It also only exposes the source code as
+# present in the git repo and the reports to the script, not all the dirty
+# build directory.
+#
+# To pass reports to upload use the variable BEAVER_CODECOV_REPORTS. These
+# reports are passed without any quoting, so globbing can be used, so if any
+# weird characters could appear in the reports file names, you need to escape
+# them properly. Entire directories can be included, the copy will be
+# recursive.
+set -eu
+
+if test -z "${BEAVER_CODECOV_REPORTS:-}"
+then
+    echo "No reports passed via BEAVER_CODECOV_REPORTS!" >&2
+    exit 0
+fi
+
+# Paths
+r="$(readlink -f $(dirname $0)/..)"
+beaver="$r/bin/beaver"
+
+# Export any codecov-specific environment variable
+codecov_vars="$(printenv -0 | sed -zn 's/^\(CODECOV_[^=]\+\)=.*$/\1\n/p' |
+        tr -d '\0')"
+export BEAVER_DOCKER_VARS="${BEAVER_DOCKER_VARS:-} $codecov_vars"
+
+# Arguments to pass to codecov by default
+
+# Copy coverage reports and git structure to a clean directory
+tmp=`mktemp -d`
+trap 'r=$?; rm -fr "$tmp"; exit $r' EXIT INT TERM QUIT
+mkdir -p "$tmp/reports"
+cp -a $BEAVER_CODECOV_REPORTS "$tmp/reports/"
+git archive --format=tar HEAD | (cd "$tmp" && tar xf -)
+cp -a $(git rev-parse --git-dir) "$tmp/"
+cp -av "$r/bin/codecov-bash" "$tmp/codecov"
+
+# Run codecov in the confined environment
+cd "$tmp"
+"$beaver" run ./codecov -n beaver -s reports "$@"
