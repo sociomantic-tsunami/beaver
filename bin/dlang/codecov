@@ -10,7 +10,9 @@
 set -eu
 
 # Default coverage directory
-export BEAVER_CODECOV_REPORTS="${BEAVER_CODECOV_REPORTS:-build/last/tmp/cov}"
+BEAVER_CODECOV_REPORTS="${COVDIR:-build/last/tmp/cov}"
+BEAVER_CODECOV_REPORTS="${BEAVER_CODECOV_REPORTS:-${COVDIR}}"
+export BEAVER_CODECOV_REPORTS
 
 # First check if there are any reports at all
 if test -z "$(ls -A "$BEAVER_CODECOV_REPORTS")"

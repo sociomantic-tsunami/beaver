@@ -466,9 +466,13 @@ after_success: beaver dlang codecov [OPTIONS]
 This command is based on the global `beaver codecov` command (please read the
 documentation on this command for more details), but automatically selects which
 reports to send, so you don't need to pass the `BEAVER_CODECOV_REPORTS`
-environment variable. Also some extra variables specific to D programs are
-passed and used as flags (`DIST DMD DC F V` etc.). If you want to pass any other
-environment variables use `BEAVER_DOCKER_VARS` as usual.
+environment variable. This will be automatically set to the `COVDIR` directory,
+if defined, and it will default to MakD's default `COVDIR` otherwise (but it can
+still be overridden via the `BEAVER_CODECOV_REPORTS` variable if needed).
+
+Also some extra variables specific to D programs are passed and used as flags
+(`DIST DMD DC F V` etc.). If you want to pass any other environment variables
+use `BEAVER_DOCKER_VARS` as usual.
 
 Please check the `bin/dlang/codecov` script if you are interested in the
 details.
