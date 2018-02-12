@@ -17,4 +17,8 @@ cmd="$1"
 shift
 
 # Run the module's command
-exec "$d/$module/$cmd" "$@"
+test -x "$d/$module/$cmd" &&
+    exec "$d/$module/$cmd" "$@"
+
+echo "Neither $d/beaver-$module nor $d/$module/$cmd were found!" >&2
+exit 1
