@@ -1,0 +1,14 @@
+#!/bin/sh
+set -u
+
+tmpfile=$(mktemp)
+trap "rm $tmpfile" EXIT
+
+set -x
+beaver NOPE --NEIN 2> $tmpfile
+r=$?
+
+set -e
+
+test "$r" -eq 1 && \
+    grep -q "Neither .*/beaver-NOPE nor .*/NOPE/--NEIN were found!" $tmpfile
