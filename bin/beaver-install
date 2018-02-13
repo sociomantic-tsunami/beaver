@@ -1,11 +1,12 @@
-#!/bin/sh
+#!/bin/bash
 # Copyright sociomantic labs GmbH 2017.
 # Distributed under the Boost Software License, Version 1.0.
 # (See accompanying file LICENSE.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 set -eu
 
-BEAVER_CONTEXT_DIR="."
+beaver_context_dir="."
+declare -a dockerfile_commands
 
 while [ "$#" -ne 0 ] && [ "$1" != "--" ]
 do
@@ -16,7 +17,13 @@ do
         shift
         ;;
         -d)
-        export BEAVER_CONTEXT_DIR="$2"
+        beaver_context_dir="$2"
+        shift
+        shift
+        ;;
+        -I)
+        dockerfile_commands+=("-I")
+        dockerfile_commands+=("$2")
         shift
         shift
         ;;
@@ -36,11 +43,13 @@ generate_and_build()
         beaver docker build -f "Dockerfile${DIST:+.$DIST}" "$@" .
     else
         # Build the docker image based on a beaver.Dockerfile base file
+        set -x
         beaver docker gen-dockerfile \
             -i beaver.Dockerfile \
-            -o beaver.Dockerfile.generated
+            -o beaver.Dockerfile.generated \
+            "${dockerfile_commands[@]-}"
         beaver docker build -f beaver.Dockerfile.generated "$@" .
     fi
 }
 
-(cd $BEAVER_CONTEXT_DIR && generate_and_build $@)
+(cd $beaver_context_dir && generate_and_build "$@")
