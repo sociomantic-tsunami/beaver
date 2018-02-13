@@ -5,4 +5,4 @@
 #
 # This Dockerfile is just for testing
 FROM sociomantictsunami/dlang:v2
-RUN touch /BUILT-1.1-Dockerfile
+RUN touch /DOCKER-RUN-CALLED

@@ -1,0 +1,22 @@
+#!/bin/sh
+# Copyright sociomantic labs GmbH 2017.
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt)
+set -xeu
+
+# Test complex usage with all options
+export DIST=
+echo "RUN touch /2-STDIN-INPUT" |
+    beaver docker gen-dockerfile -o Dockerfile3 -b build2 -D xenial \
+        -i beaver2.Dockerfile -I 'RUN touch /1-ARG-CALLED' -i -
+cat Dockerfile3
+grep -qv 'FROM.*:' Dockerfile3
+# Test ordering
+runs="$(grep '^RUN touch' Dockerfile3)"
+echo "$runs"
+test "$(echo "$runs" | sort)" = "$runs"
+beaver docker build -f Dockerfile3 .
+rm Dockerfile3
+beaver docker run test -f /0-DOCKER-RUN-CALLED -a -f /1-ARG-CALLED \
+    -a -f /2-STDIN-INPUT -a -f /3-BUILD-SCRIPT-CALLED

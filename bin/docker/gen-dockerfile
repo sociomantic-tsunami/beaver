@@ -7,7 +7,6 @@ set -eu
 
 # Defaults
 default_input=beaver.Dockerfile
-docker_dir=docker
 docker_build=build
 docker_dist=${DIST:-$(lsb_release -cs)}
 
@@ -30,10 +29,10 @@ and the following transformations are performed:
   'lsb_release -cs' if the environment variable is not present.
 
 * The following lines are added at the end of the generated Dockerfile (only
-  if the $docker_dir/$docker_build script exists and it's executable):
+  if the ./$docker_build script exists and it's executable):
 
-    COPY $docker_dir/ /docker-tmp
-    RUN /docker-tmp/$docker_build && rm -fr /docker-tmp
+    COPY $docker_build /docker/
+    RUN /docker/$docker_build
 
   This means a simple build script is used to build the image.
 
@@ -48,8 +47,6 @@ Options:
     include the INSTRUCTION as an instruction to add to the Dockerfile
 -o FILE
     write the resulting Dockerfile to FILE instead of STDOUT
--d DIR
-    copy the DIR to the image instead of the default '$docker_dir'
 -b FILE
     run the FILE as the build script instead of the default '$docker_build'
 -D DIST
@@ -69,7 +66,6 @@ do
         i) fragments+=("$(cat "$OPTARG")") ;;
         I) fragments+=("$OPTARG") ;;
         o) output="$OPTARG" ;;
-        d) docker_dir="$OPTARG" ;;
         b) docker_build="$OPTARG" ;;
         D) docker_dist="$OPTARG" ;;
         h) usage ; exit 0 ;;
@@ -114,11 +110,11 @@ do
     transform_from "$f"
 done
 
-# Print footer if there is actually a $docker_dir/$docker_build script
-if test -x "$docker_dir/$docker_build"
+# Print footer if there is actually a $docker_build script
+if test -x "./$docker_build"
 then
     cat <<EOT
-COPY $docker_dir/ /docker-tmp
-RUN /docker-tmp/$docker_build && rm -fr /docker-tmp
+COPY ./$docker_build /docker/
+RUN /docker/$docker_build
 EOT
 fi

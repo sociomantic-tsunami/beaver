@@ -5,16 +5,18 @@
 # http://www.boost.org/LICENSE_1_0.txt)
 set -eu
 
+BEAVER_CONTEXT_DIR="."
+
 while [ "$#" -ne 0 ] && [ "$1" != "--" ]
 do
     case "$1" in
         -t)
-        BEAVER_DOCKER_IMG="$2"
+        export BEAVER_DOCKER_IMG="$2"
         shift
         shift
         ;;
         -d)
-        BEAVER_CONTEXT_DIR="$2"
+        export BEAVER_CONTEXT_DIR="$2"
         shift
         shift
         ;;
@@ -24,13 +26,21 @@ do
     esac
 done
 
-if test -r "Dockerfile${DIST:+.$DIST}"
-then
-    # Build the docker image using .$DIST as suffix if present
-    beaver docker build -f "Dockerfile${DIST:+.$DIST}" "$@" .
-else
-    # Build the docker image based on a beaver.Dockerfile base file
-    beaver docker gen-dockerfile -i beaver.Dockerfile \
+if [ "$#" -ne 0 ] && [ "$1" = "--" ]; then shift; fi
+
+generate_and_build()
+{
+    if test -r "Dockerfile${DIST:+.$DIST}"
+    then
+        # Build the docker image using .$DIST as suffix if present
+        beaver docker build -f "Dockerfile${DIST:+.$DIST}" "$@" .
+    else
+        # Build the docker image based on a beaver.Dockerfile base file
+        beaver docker gen-dockerfile \
+            -i beaver.Dockerfile \
             -o beaver.Dockerfile.generated
-    beaver docker build -f beaver.Dockerfile.generated "$@" .
-fi
+        beaver docker build -f beaver.Dockerfile.generated "$@" .
+    fi
+}
+
+(cd $BEAVER_CONTEXT_DIR && generate_and_build $@)

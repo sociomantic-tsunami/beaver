@@ -1,0 +1,13 @@
+#!/bin/sh
+# Copyright sociomantic labs GmbH 2017.
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt)
+set -xeu
+
+# Test supported args
+beaver install -t test-image -d ./context -- -q
+cat context/beaver.Dockerfile.generated
+rm context/beaver.Dockerfile.generated
+BEAVER_DOCKER_IMG="test-image" beaver docker run \
+    test -f /DOCKER-RUN-CALLED -a -f /BUILD-SCRIPT-CALLED

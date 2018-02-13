@@ -1,0 +1,20 @@
+#!/bin/sh
+# Copyright sociomantic labs GmbH 2017.
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt)
+set -xeu
+
+# Test FROM lines
+export DIST=xenial
+echo -n > from.output
+oldIFS="$IFS"
+IFS=
+while read i
+do
+    echo "$i" | beaver docker gen-dockerfile -i - | head -n1 >> from.output
+done < from.input
+IFS="$oldIFS"
+cat from.output
+diff -u from.expected from.output
+rm from.output
