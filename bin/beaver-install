@@ -5,6 +5,25 @@
 # http://www.boost.org/LICENSE_1_0.txt)
 set -eu
 
+while [ "$#" -ne 0 ] && [ "$1" != "--" ]
+do
+    case "$1" in
+        -t)
+        BEAVER_DOCKER_IMG="$2"
+        shift
+        shift
+        ;;
+        -d)
+        BEAVER_CONTEXT_DIR="$2"
+        shift
+        shift
+        ;;
+        *)
+        shift
+        ;;
+    esac
+done
+
 d="$(dirname "$0")"
 
 if test -r "Dockerfile${DIST:+.$DIST}"
