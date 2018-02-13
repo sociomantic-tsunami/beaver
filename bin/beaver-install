@@ -24,15 +24,13 @@ do
     esac
 done
 
-d="$(dirname "$0")"
-
 if test -r "Dockerfile${DIST:+.$DIST}"
 then
     # Build the docker image using .$DIST as suffix if present
-    "$d/beaver" docker build -f "Dockerfile${DIST:+.$DIST}" "$@" .
+    beaver docker build -f "Dockerfile${DIST:+.$DIST}" "$@" .
 else
     # Build the docker image based on a beaver.Dockerfile base file
-    "$d/beaver" docker gen-dockerfile -i beaver.Dockerfile \
+    beaver docker gen-dockerfile -i beaver.Dockerfile \
             -o beaver.Dockerfile.generated
-    "$d/beaver" docker build -f beaver.Dockerfile.generated "$@" .
+    beaver docker build -f beaver.Dockerfile.generated "$@" .
 fi

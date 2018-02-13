@@ -7,8 +7,6 @@
 # Build a docker image for D projects
 set -eu
 
-beaver=$(dirname $0)/../beaver
-
 # Package name deduced based on supplied DMD version
 case "$DMD" in
     dmd*   ) PKG= ;;
@@ -24,12 +22,12 @@ esac
 
 # Generate the Dockerfile including the DMD_PKG argument and install the
 # relevant DMD
-"$beaver" docker gen-dockerfile \
+beaver docker gen-dockerfile \
         -i beaver.Dockerfile \
         -I 'ARG DMD_PKG' -I 'ENV DMD_PKG=$DMD_PKG' \
         -I 'RUN apt update && apt -y install --allow-downgrades $DMD_PKG' \
         -o beaver.Dockerfile.generated
 
 # Build the docker image from the generated Dockerfile passing DMD_PKG
-"$beaver" docker build --build-arg "DMD_PKG=$PKG" \
+beaver docker build --build-arg "DMD_PKG=$PKG" \
         -f beaver.Dockerfile.generated "$@" .
