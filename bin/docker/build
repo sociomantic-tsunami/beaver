@@ -5,8 +5,9 @@
 # http://www.boost.org/LICENSE_1_0.txt)
 
 # Look for a suitable image name
-img="${BEAVER_DOCKER_IMG-$(git config hub.upstream)}"
-img="${img:-${TRAVIS_REPO_SLUG:-beaver}}"
+img="${BEAVER_DOCKER_IMG:-$(git config hub.upstream)}"
+img="${img:-$TRAVIS_REPO_SLUG}"
+img="${img:-beaver}"
 
 # Build the docker image
 set -xe
