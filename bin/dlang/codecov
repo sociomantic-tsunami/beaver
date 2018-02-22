@@ -9,9 +9,11 @@
 # reports automatically (so you don't have to pass BEAVER_CODECOV_REPORTS).
 set -eu
 
+# Default coverage directory
+export BEAVER_CODECOV_REPORTS="${BEAVER_CODECOV_REPORTS:-build/last/tmp/cov}"
+
 # First check if there are any reports at all
-export BEAVER_CODECOV_REPORTS=".*.lst"
-if test "$(echo ${BEAVER_CODECOV_REPORTS:-})" = "${BEAVER_CODECOV_REPORTS:-}"
+if test -z "$(ls -A "$BEAVER_CODECOV_REPORTS")"
 then
     echo "No reports found" >&2
     exit 0
