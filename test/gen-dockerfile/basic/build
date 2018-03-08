@@ -4,4 +4,4 @@
 # (See accompanying file LICENSE.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
 
-touch /BUILT-2.4-build2
+touch /BUILD-SCRIPT-CALLED

@@ -9,11 +9,12 @@ set -xeu
 beaver install
 cat beaver.Dockerfile.generated
 rm beaver.Dockerfile.generated
-beaver docker run test -f /BUILT-1-Dockerfile -a -f /BUILT-2-build
+beaver docker run test -f /DOCKER-RUN-CALLED -a -f /BUILD-SCRIPT-CALLED
 test "$(beaver docker run lsb_release -cs)" = "$(lsb_release -cs)"
 
 # Test basic usage with DIST
 DIST=xenial beaver install
 cat beaver.Dockerfile.generated
-beaver docker run test -f /BUILT-1-Dockerfile -a -f /BUILT-2-build
+rm beaver.Dockerfile.generated
+beaver docker run test -f /DOCKER-RUN-CALLED -a -f /BUILD-SCRIPT-CALLED
 test "$(beaver docker run lsb_release -cs)" = xenial
