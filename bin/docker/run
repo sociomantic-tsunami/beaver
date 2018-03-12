@@ -5,6 +5,9 @@
 # http://www.boost.org/LICENSE_1_0.txt)
 set -e
 
+r="$(dirname $(readlink -f $0))/../.."
+. $r/lib/args.sh
+
 # Environment variables to export (Travis-defined + BEAVER_DOCKER_VARS)
 env_vars="$(printenv -0 | sed -zn 's/^\([^=]\+\)=.*$/\1\n/p' | tr -d '\0')"
 travis_vars="USER HOME DEBIAN_FRONTEND \
@@ -25,4 +28,4 @@ img="${img:-${TRAVIS_REPO_SLUG:-beaver}}"
 set -x
 docker run --rm -v "$HOME:$HOME" -v "$PWD:$PWD" -w "$PWD" -u "$uid" \
 	-e LANG=C.UTF-8 -e LC_ALL=C.UTF-8 $docker_env_var_args \
-	$BEAVER_DOCKER_OPTS "$img" "$@"
+	$BEAVER_DOCKER_OPTS -t "$img" "$@"

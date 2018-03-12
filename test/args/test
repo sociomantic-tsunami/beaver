@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+
+export TEST1="expected1"
+export TEST2="expected2"
+
+output=`beaver docker run -t ubuntu -e TEST1 -e TEST2 \
+    -- /bin/bash -c 'echo -n $TEST1 $TEST2'`
+test "$output" == "expected1 expected2"
