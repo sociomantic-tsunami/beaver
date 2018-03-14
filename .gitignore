@@ -1,1 +1,2 @@
 beaver.Dockerfile.generated
+test/multi-install/.dockerignore

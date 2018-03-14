@@ -1,0 +1,44 @@
+#!/bin/sh
+# Copyright sociomantic labs GmbH 2018.
+# Distributed under the Boost Software License, Version 1.0.
+# (See accompanying file LICENSE.txt or copy at
+# http://www.boost.org/LICENSE_1_0.txt)
+set -xeu
+
+test_run()
+{
+    echo "Running test on img${1}..."
+    beaver docker run test -f /BUILT-img${1}-Dockerfile -a \
+            -f /BUILT-img${1}-Dockerfile-COPY -a \
+            -f /BUILT-img${1}-build
+    beaver docker run cat /BUILT-img${1}-Dockerfile-COPY
+    cat img${1}/build
+    test "$(beaver docker run cat /BUILT-img${1}-Dockerfile-COPY | md5sum)" = \
+            "$(md5sum < img${1}/build)"
+}
+
+# Use xenial
+export DIST=xenial
+
+# Build and run first image (with beaver.Dockerfile)
+export BEAVER_DOCKER_IMG=img1 BEAVER_DOCKER_CONTEXT=img1
+beaver install
+cat beaver.Dockerfile.generated
+cat img1/beaver.Dockerfile.generated.expected
+test "$(md5sum < beaver.Dockerfile.generated)" = \
+        "$(md5sum < img1/beaver.Dockerfile.generated.expected)"
+rm beaver.Dockerfile.generated
+test_run 1
+
+# Build and run second image (with Dockerfile.xenial)
+export BEAVER_DOCKER_IMG=img2 BEAVER_DOCKER_CONTEXT=img2
+beaver install
+test_run 2
+
+# Interleaved runs between both images
+BEAVER_DOCKER_IMG=img1 test_run 1
+BEAVER_DOCKER_IMG=img2 test_run 2
+BEAVER_DOCKER_IMG=img2 test_run 2
+beaver install # Creates img2 again
+BEAVER_DOCKER_IMG=img1 test_run 1
+BEAVER_DOCKER_IMG=img2 test_run 2

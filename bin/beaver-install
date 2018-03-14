@@ -7,13 +7,35 @@ set -eu
 
 d="$(dirname "$0")"
 
-if test -r "Dockerfile${DIST:+.$DIST}"
+# Copy a file only if it exist
+maybe_cp()
+{
+    if test -f "$1"
+    then
+        cp -v "$1" "$2"
+    fi
+}
+
+# Look if a particular context was given and copy the .dockerfile from it
+if test -n "${BEAVER_DOCKER_CONTEXT:-}"
+then
+    maybe_cp "$BEAVER_DOCKER_CONTEXT/.dockerignore" .dockerignore
+    maybe_cp "$BEAVER_DOCKER_CONTEXT/dockerignore" .dockerignore
+    docker_dir="-d $BEAVER_DOCKER_CONTEXT"
+else
+    BEAVER_DOCKER_CONTEXT=.
+    docker_dir=
+fi
+
+if test -r "$BEAVER_DOCKER_CONTEXT/Dockerfile${DIST:+.$DIST}"
 then
     # Build the docker image using .$DIST as suffix if present
-    "$d/beaver" docker build -f "Dockerfile${DIST:+.$DIST}" "$@" .
+    "$d/beaver" docker build \
+            -f "$BEAVER_DOCKER_CONTEXT/Dockerfile${DIST:+.$DIST}" "$@" .
 else
     # Build the docker image based on a beaver.Dockerfile base file
-    "$d/beaver" docker gen-dockerfile -i beaver.Dockerfile \
+    "$d/beaver" docker gen-dockerfile $docker_dir \
+            -i "$BEAVER_DOCKER_CONTEXT/beaver.Dockerfile" \
             -o beaver.Dockerfile.generated
     "$d/beaver" docker build -f beaver.Dockerfile.generated "$@" .
 fi
