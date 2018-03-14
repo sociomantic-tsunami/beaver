@@ -17,6 +17,7 @@ do
     case "$arg" in
         t) export BEAVER_DOCKER_IMG="$OPTARG" ;;
         e) export BEAVER_DOCKER_VARS="$BEAVER_DOCKER_VARS $OPTARG" ;;
+        d) export BEAVER_CONTEXT_DIR="$OPTARG"
     esac
 done
 
