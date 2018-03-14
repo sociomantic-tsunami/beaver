@@ -6,6 +6,8 @@
 set -eu
 
 d="$(dirname "$0")"
+. $d/lib/args.sh
+
 
 if test -r "Dockerfile${DIST:+.$DIST}"
 then
