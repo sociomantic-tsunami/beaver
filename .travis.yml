@@ -19,6 +19,7 @@ before_install: git submodule update --init
 
 env:
     global:
+        - BEAVER_DEBUG=1
         # Make sure beaver is in the PATH
         - PATH="$TRAVIS_BUILD_DIR/bin:$PATH"
 

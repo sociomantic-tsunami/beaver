@@ -8,7 +8,7 @@
 # runs the test provided as argument
 set -eu
 
-export PATH="$PWD/bin:$PATH"
+export PATH="$PWD/bin:$PATH" BEAVER_DEBUG=1
 
 if test $# -eq 0
 then
