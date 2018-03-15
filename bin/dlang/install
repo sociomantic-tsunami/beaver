@@ -34,6 +34,8 @@ maybe_cp()
 # Look if a particular context was given and copy the .dockerfile from it
 if test -n "${BEAVER_DOCKER_CONTEXT:-}"
 then
+    trap 'r=$?; if test $r -eq 0 -a "${BEAVER_DEBUG:-0}" -ne 1; \
+            then rm -f .dockerignore; fi; exit $r' EXIT
     maybe_cp "$BEAVER_DOCKER_CONTEXT/.dockerignore" .dockerignore
     maybe_cp "$BEAVER_DOCKER_CONTEXT/dockerignore" .dockerignore
     docker_dir="-d $BEAVER_DOCKER_CONTEXT"
@@ -53,3 +55,8 @@ fi
 # Build the docker image from the generated Dockerfile passing DMD_PKG
 "$beaver" docker build --build-arg "DMD_PKG=$PKG" \
         -f beaver.Dockerfile.generated "$@" .
+
+if test "${BEAVER_DEBUG:-0}" -ne 1
+then
+    rm -f beaver.Dockerfile.generated .dockerignore
+fi
