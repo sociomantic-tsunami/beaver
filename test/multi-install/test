@@ -7,6 +7,7 @@ set -xeu
 
 test_run()
 {
+    true "--------------------"
     echo "Running test on img${1}..."
     beaver docker run test -f /BUILT-img${1}-Dockerfile -a \
             -f /BUILT-img${1}-Dockerfile-COPY -a \
@@ -30,15 +31,25 @@ test "$(md5sum < beaver.Dockerfile.generated)" = \
 rm beaver.Dockerfile.generated
 test_run 1
 
+true "======================================================================="
 # Build and run second image (with Dockerfile.xenial)
 export BEAVER_DOCKER_IMG=img2 BEAVER_DOCKER_CONTEXT=img2
 beaver install
 test_run 2
 
+true "======================================================================="
+# Build and run first first image with dlang install
+export BEAVER_DOCKER_IMG=img1 BEAVER_DOCKER_CONTEXT=img1
+DMD=dmd1 beaver dlang install
+test_run 1
+
+true "======================================================================="
 # Interleaved runs between both images
+BEAVER_DOCKER_IMG=img2 test_run 2
+BEAVER_DOCKER_IMG=img2 test_run 2
 BEAVER_DOCKER_IMG=img1 test_run 1
-BEAVER_DOCKER_IMG=img2 test_run 2
-BEAVER_DOCKER_IMG=img2 test_run 2
-beaver install # Creates img2 again
+
+echo $BEAVER_DOCKER_IMG $BEAVER_DOCKER_CONTEXT
+beaver install # Creates img1 again (no dlang)
 BEAVER_DOCKER_IMG=img1 test_run 1
 BEAVER_DOCKER_IMG=img2 test_run 2
