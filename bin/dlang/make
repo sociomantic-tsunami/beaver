@@ -37,4 +37,4 @@ fi
 "$beaver" make all
 
 # Test
-"$beaver" make test
+"$beaver" make integrationtest
