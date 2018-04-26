@@ -263,9 +263,10 @@ Files are put in the debian repository `$DIST/(pre)release/ARCH` where `$DIST`
 can also be overriden via command-line arguments and if not present at all
 defaults to `$(lsb_release -cs)`, releases are put in the `release` components
 and pre-releases (tags with a `-` as per [SemVer]() specification) in the
-`prerelease` component. Finally `ARCH` is the architecture and is calculated
-from the Debian package file name (normally packages end with `_ARCH.deb`), but
-can also be overriden via command-line arguments.
+`prerelease` component (unless `-C <comp>` is used, in which case the component
+will be force to be `<comp>` instead). Finally `ARCH` is the architecture and is
+calculated from the Debian package file name (normally packages end with
+`_ARCH.deb`), but can also be overriden via command-line arguments.
 
 For more options and a more in-depth description of defaults run `beaver bintray
 upload -h` for online help.
