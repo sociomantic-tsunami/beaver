@@ -15,6 +15,7 @@ user="$BINTRAY_USER"
 key="$BINTRAY_KEY"
 publish=true
 override=false
+comp_force=
 comp_release=release
 comp_prerelease=prerelease
 in_docker=true
@@ -71,6 +72,9 @@ Options:
 	don't publish uploaded packages (packages are published by default)
 -o
 	overwrite existing files if they already exist
+-C NAME
+    force the Debian component to be NAME (instead of automatically figure it
+    out and use one of -r or -p)
 -r NAME
 	name of the Debian component for final releases (default: $comp_release)
 -p NAME
@@ -120,7 +124,7 @@ bt()
 # Parse arguments
 ################################################################################
 
-while getopts t:d:D:u:k:Por:p:a:Nh arg
+while getopts t:d:D:u:k:PoC:r:p:a:Nh arg
 do
 	case "$arg" in
 		t) tag="$OPTARG" ;;
@@ -130,6 +134,7 @@ do
 		k) key="$OPTARG" ;;
 		P) publish=false ;;
 		o) override=true ;;
+		r) comp_force="$OPTARG" ;;
 		r) comp_release="$OPTARG" ;;
 		p) comp_prerelease="$OPTARG" ;;
 		a) arch="$OPTARG" ;;
@@ -196,7 +201,9 @@ fi
 # Upload files
 ################################################################################
 
-if echo "$tag" | grep -q -- '.\+-.\+'; then
+if test -n "$comp_force"; then
+    comp="$comp_force"
+elif echo "$tag" | grep -q -- '.\+-.\+'; then
 	comp="$comp_prerelease"
 else
 	comp="$comp_release"
