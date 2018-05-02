@@ -42,7 +42,7 @@ set_dc_dver() {
     fi
 
     export DC DVER D2_ONLY
-    set $old_opts
+    set -$old_opts
 }
 
 # Simple function to run commands based on the D version, assuming the `DVER`
@@ -63,6 +63,6 @@ if_d() {
         "$@"
     fi
 
-    set $old_opts
+    set -$old_opts
 }
 
