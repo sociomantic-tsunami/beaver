@@ -34,6 +34,22 @@ Usage
   ```
 
 
+Passing option
+--------------
+
+Most options to the `beaver` commands and sub-commands are passed via
+environment variables that start with `BEAVER_`. Options can also be passed via
+CLI options by using `--option`, which at the end it also exports the equivalent
+environment variable.
+
+For example, `BEAVER_DOCKER_IMG=test beaver docker build` is the same as `beaver
+--docker-img test docker install` (or `beaver --docker-img=test docker build`).
+
+These options can only be passed at the beginning (before the beaver command),
+so `beaver docker --docker-img test build` and `beaver docker build
+--docker-img test` won't work).
+
+
 Docker
 ------
 
@@ -59,12 +75,12 @@ The simplest use case would be:
 default options (`--pull -t $img` in particular).
 
 The image name will be taken from the `BEAVER_DOCKER_IMG` environment variable,
-if present. If not present it falls back to the result of `git config
-hub.upstream` (in case you are using the
-[git-hub](https://github.com/sociomantic-tsunami/git-hub) tool in the
-command-line. If that's empty too, then it will try with the `TRAVIS_REPO_SLUG`
-environment variable (in case it's running inside travis) and as a last resort
-it will simply use `beaver` as the image name.
+if present (can also be passed via `beaver --docker-img=...` CLI option). If not
+present it falls back to the result of `git config hub.upstream` (in case you
+are using the [git-hub](https://github.com/sociomantic-tsunami/git-hub) tool in
+the command-line. If that's empty too, then it will try with the
+`TRAVIS_REPO_SLUG` environment variable (in case it's running inside travis) and
+as a last resort it will simply use `beaver` as the image name.
 
 You can pass extra `docker build` options to `beaver docker build`, for example
 to use a different `Dockerfile`:
@@ -111,8 +127,8 @@ script:
 ```
 
 If you need to pass extra variables to `docker run` you can do it by using the
-`BEAVER_DOCKER_VARS` environment variable. To make it globally, you can do, for
-example:
+`BEAVER_DOCKER_VARS` environment variable (or `beaver --docker-vars` CLI
+option). To make it globally, you can do, for example:
 
 ```yml
 env:
@@ -127,7 +143,7 @@ install: beaver docker build -f "docker/Dockerfile.$DIST" .
 ```
 
 You can also pass extra options to `docker` by exporting the
-`BEAVER_DOCKER_OPTS`.
+`BEAVER_DOCKER_OPTS` (or using `beaver --docker-opts=--whatever docker ...`).
 
 The docker image name is `beaver`.
 
@@ -204,11 +220,12 @@ a `.dockerignore` file yet](https://github.com/moby/moby/issues/12886), beaver
 adds some support to overcome this limitation.
 
 To use multiple build contexts, you can specify the variable
-`BEAVER_DOCKER_CONTEXT` to point to a directory that will contain your
-`Dockerfile` or `beaver.Dockerfile` and possibly a `build` script (equivalent
-to the `docker/build` script in normal builds) and/or a `dockerignore`
-(`.dockerignore is also accepted but `dockerignore` will take precedence), which
-will be copied to the current working directory as `.dockerignore`.
+`BEAVER_DOCKER_CONTEXT` (or `--docker-context` CLI option) to point to
+a directory that will contain your `Dockerfile` or `beaver.Dockerfile` and
+possibly a `build` script (equivalent to the `docker/build` script in normal
+builds) and/or a `dockerignore` (`.dockerignore is also accepted but
+`dockerignore` will take precedence), which will be copied to the current
+working directory as `.dockerignore`.
 
 For example:
 ```
@@ -296,7 +313,7 @@ reports. Just make sure the project was already built with coverage support and
 then use something like this in the `.travis.yml` file:
 
 ```yml
-after_success: BEAVER_CODECOV_REPORTS="*.lst" beaver codecov [OPTIONS]
+after_success: beaver --codecov-reports="*.lst" codecov [OPTIONS]
 ```
 
 The `[OPTIONS]` are forwarded directly to the
@@ -315,10 +332,10 @@ passed to the docker container. If you want to pass any other environment
 variables use `BEAVER_DOCKER_VARS` as usual.
 
 The reports location must be passed explicitly to the script via the
-`BEAVER_CODECOV_REPORTS` environment variable. Glob patterns (like `*.lst`) and
-directories can be used (they will be copied recursively), but special
-characters are not escaped from the shell, so be careful if files have special
-characters, they must be properly escaped.
+`BEAVER_CODECOV_REPORTS` environment variable (or `--codecov-reports` CLI
+options). Glob patterns (like `*.lst`) and directories can be used (they will be
+copied recursively), but special characters are not escaped from the shell, so
+be careful if files have special characters, they must be properly escaped.
 
 Some options are passed to codecov by default (at the moment `-n beaver -s
 reports`, where `reports` is the location of the sanitized sandbox where reports

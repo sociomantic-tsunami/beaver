@@ -7,15 +7,21 @@ set -xeu
 
 test_run()
 {
+    args=
+    if test "${2:-}" = "pass-args"
+    then
+        args="--docker-img img${1} --docker-context=img${1}"
+    fi
     true "--------------------"
     echo "Running test on img${1}..."
-    beaver docker run test -f /BUILT-img${1}-Dockerfile -a \
+    beaver $args docker run test -f /BUILT-img${1}-Dockerfile -a \
             -f /BUILT-img${1}-Dockerfile-COPY -a \
             -f /BUILT-img${1}-build
-    beaver docker run cat /BUILT-img${1}-Dockerfile-COPY
+    beaver $args docker run cat /BUILT-img${1}-Dockerfile-COPY
     cat img${1}/build
-    test "$(beaver docker run cat /BUILT-img${1}-Dockerfile-COPY | md5sum)" = \
-            "$(md5sum < img${1}/build)"
+    md5real=$(beaver $args docker run cat /BUILT-img${1}-Dockerfile-COPY |
+            md5sum)
+    test "$md5real" = "$(md5sum < img${1}/build)"
 }
 
 # Use xenial
@@ -42,6 +48,16 @@ true "======================================================================="
 export BEAVER_DOCKER_IMG=img1 BEAVER_DOCKER_CONTEXT=img1
 DMD=dmd1 beaver dlang install
 test_run 1
+
+true "======================================================================="
+# Build and run second image (with Dockerfile.xenial)
+beaver --docker-img img2 --docker-context=img2 install
+test_run 2 pass-args
+
+true "======================================================================="
+# Build and run first first image with dlang install
+DMD=dmd1 beaver --docker-img img1 --docker-context=img1 dlang install
+test_run 1 pass-args
 
 true "======================================================================="
 # Interleaved runs between both images
