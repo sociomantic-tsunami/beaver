@@ -3,22 +3,138 @@
 # Distributed under the Boost Software License, Version 1.0.
 # (See accompanying file LICENSE.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
+set -ue
 
 d="$(dirname "$0")"
+
+list_commads()
+{
+    ls "$d"/beaver-* | sed 's|^.*/beaver-\([^/]\+\)$|\1|'
+    for mod in $(find "$d" -mindepth 1 -type d)
+    do
+        submods=$(echo "$mod"/* | xargs -n1 basename | sort)
+        echo "$(basename "$mod") ("$submods")"
+    done
+}
+
+usage()
+{
+    cat <<EOT
+Usage: $0 [OPTS] CMD...
+
+OPTS
+
+--help, -h
+  print this help and exit.
+
+--some-opt ARG, --some-opt=ARG
+  overrides environment variable BEAVER_SOME_OPT with ARG.
+  This is just a nicer way to write:
+    BEAVER_SOME_OPT=ARG beaver CMD [CMD_OPTS]
+
+CMD...
+  the beaver command to run and its arguments.
+
+  Available comands (and sub-commands) are:
+EOT
+    list_commads | sort | sed 's/.*/    \0/'
+}
+
+args_error()
+{
+    echo "Error: $@" >&2
+    echo >&2
+    usage >&2
+    exit 2
+}
+
+# Parse general beaver args
+
+pos_only=0
+needs_arg=0
+prev_arg=
+# We use an argument rotation trick to pop arguments from the front and remove
+# them if they are common arguments
+for arg
+do
+    shift
+
+    # We are waiting for an argument of an option
+    if test "$needs_arg" = 1
+    then
+        needs_arg=0
+        export $args_name="$arg"
+
+    # If the argument is a plain "--" we error, as we don't support that
+    elif test "$arg" = "--"
+    then
+        args_error "Invalid option '--' before the beaver command"
+
+    # Print help and exit if --help or -h is found
+    elif test "$arg" = "--help" -o "$arg" = "-h"
+    then
+        usage
+        exit 0
+
+    # We are not just parsing positional arguments and the arg starts with "--"
+    elif test "$pos_only" != 1 -a "$(echo "$arg" | cut -c1-2)" = "--"
+    then
+        args_name="BEAVER_$(echo "$arg" | sed 's/^--\([^=]\+\)=\?.*$/\1/' |
+                tr '[:lower:]-' '[:upper:]_')"
+        if echo "$arg" | grep -q '='
+        then
+            arg="$(echo "$arg" | sed 's/^--[^=]\+=//')"
+            export $args_name="$arg"
+        else
+            prev_arg="$arg"
+            needs_arg=1
+        fi
+
+    # We found a positional argument, so we stop processing and just keep
+    # adding arguments untouched
+    else
+        pos_only=1
+        set -- "$@" "$arg"
+    fi
+done
+
+if test "$needs_arg" = 1
+then
+    args_error "$prev_arg needs an argument"
+fi
+
+if test $# -lt 1
+then
+    args_error "Missing a CMD to run"
+fi
 
 # Look if the module is already present as a built-in beaver command
 module="$1"
 shift
-test -x "$d/beaver-$module" &&
+if test -x "$d/beaver-$module"
+then
 	exec "$d/beaver-$module" "$@"
+fi
 
 # If not get the command
-cmd="$1"
-shift
+if test $# -ge 1
+then
+    cmd="$1"
+    shift
+elif test -d "$d/$module"
+then
+    args_error "Command '$module' needs a sub-command"
+else
+    args_error "Command '$module' not found"
+fi
 
 # Run the module's command
-test -x "$d/$module/$cmd" &&
+if test -x "$d/$module/$cmd"
+then
     exec "$d/$module/$cmd" "$@"
+elif test -d "$d/$module"
+then
+    args_error "No sub-command '$cmd' for command '$module'" >&2
+fi
 
-echo "Neither $d/beaver-$module nor $d/$module/$cmd were found!" >&2
-exit 1
+args_error "Command '$module' not found" >&2

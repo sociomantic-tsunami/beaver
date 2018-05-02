@@ -1,14 +1,44 @@
 #!/bin/sh
-set -u
+set -eu
 
-tmpfile=$(mktemp)
-trap "rm $tmpfile" EXIT
+TESTS=$(cat <<EOT
+beaver NOPE --NEIN,2,,Error: Command 'NOPE' not found
+beaver,2,,Error: Missing a CMD to run
+beaver dlang NOPE --NEIN,2,,Error: No sub-command 'NOPE' for command 'dlang'
+beaver dlang,2,,Error: Command 'dlang' needs a sub-command
+beaver --some-option,2,,Error: --some-option needs an argument
+beaver --some-option 5 -- cmd,2,,Error: Invalid option '--' before the beaver command
+beaver --some-option 5 cmd,2,,Error: Command 'cmd' not found
+EOT
+)
 
-set -x
-beaver NOPE --NEIN 2> $tmpfile
-r=$?
+outfile=$(mktemp)
+errfile=$(mktemp)
+trap "r=\$?; if test \$r -eq 0; then rm $outfile $errfile; fi; exit \$r" EXIT
 
-set -e
+echo "$TESTS" | while IFS='' read -r t
+do
+    cmd=$(echo "$t" | cut -d, -f1)
+    ret=$(echo "$t" | cut -d, -f2)
+    out=$(echo "$t" | cut -d, -f3)
+    err=$(echo "$t" | cut -d, -f4)
 
-test "$r" -eq 1 && \
-    grep -q "Neither .*/beaver-NOPE nor .*/NOPE/--NEIN were found!" $tmpfile
+    set +e -x
+    $cmd > "$outfile" 2> "$errfile"
+    r=$?
+    set -e
+    test "$r" -eq "$ret"
+    if test -z "$out"
+    then
+        test -z "$(cat "$outfile")"
+    else
+        grep -q "$out" "$outfile"
+    fi
+    if test -z "$err"
+    then
+        test -z "$(cat "$errfile")"
+    else
+        grep -q "$err" "$errfile"
+    fi
+    set +x
+done
