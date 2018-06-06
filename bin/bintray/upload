@@ -134,7 +134,7 @@ do
 		k) key="$OPTARG" ;;
 		P) publish=false ;;
 		o) override=true ;;
-		r) comp_force="$OPTARG" ;;
+		C) comp_force="$OPTARG" ;;
 		r) comp_release="$OPTARG" ;;
 		p) comp_prerelease="$OPTARG" ;;
 		a) arch="$OPTARG" ;;
