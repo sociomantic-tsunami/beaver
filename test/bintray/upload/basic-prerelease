@@ -1,0 +1,4 @@
+BINTRAY_USER=user TRAVIS_TAG=v0.0.1-pre.1 TRAVIS_REPO_SLUG=sociomantic/test beaver bintray upload -N -k test -n pkg.deb
+0
+jfrog bt version-create --desc= --vcs-tag=v0.0.1-pre.1 --released= sociomantic/test/test/v0.0.1-pre.1
+jfrog bt upload --publish=true --override=false --deb=xenial/prerelease/pkg.deb pkg.deb sociomantic/test/test/v0.0.1-pre.1

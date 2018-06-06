@@ -1,0 +1,4 @@
+BINTRAY_USER=user TRAVIS_TAG=not-a-tag TRAVIS_REPO_SLUG=sociomantic/test beaver bintray upload -N -C comp -k api-key -n lala.deb
+0
+jfrog bt version-create --desc= --vcs-tag=not-a-tag --released= sociomantic/test/test/not-a-tag
+jfrog bt upload --publish=true --override=false --deb=xenial/comp/lala.deb lala.deb sociomantic/test/test/not-a-tag

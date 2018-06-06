@@ -1,0 +1,4 @@
+BINTRAY_USER=user TRAVIS_TAG=not-a-tag TRAVIS_REPO_SLUG=sociomantic/test beaver bintray upload -D bionic -N -k test -n pkg.deb
+0
+jfrog bt version-create --desc= --vcs-tag=not-a-tag --released= sociomantic/test/test/not-a-tag
+jfrog bt upload --publish=true --override=false --deb=bionic/prerelease/pkg.deb pkg.deb sociomantic/test/test/not-a-tag
