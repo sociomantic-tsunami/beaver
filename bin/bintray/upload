@@ -19,6 +19,7 @@ comp_force=
 comp_release=release
 comp_prerelease=prerelease
 in_docker=true
+dry_run=false
 arch=
 
 
@@ -84,6 +85,9 @@ Options:
 	file name)
 -N
 	don't run inside docker (by default this command runs inside docker)
+-n
+	dry run (don't actually run the bintray command and skip most sanity checks,
+	just print the commands that would be run if all was good)
 -h
 	show this help message and exit
 EOT
@@ -114,17 +118,23 @@ bt()
 {
 	cmd="$1"
 	shift
-	# Dummy config to avoid jfrog to stop and ask questions...
-	jfrog bt config --user=nobody --key=nokey --licenses=nolicense
+	if ! $dry_run
+	then
+		# Dummy config to avoid jfrog to stop and ask questions...
+		jfrog bt config --user=nobody --key=nokey --licenses=nolicense
+	fi
 	echo jfrog bt "$cmd" "$@"
-	jfrog bt "$cmd" --user="$user" --key="$key" "$@"
+	if ! $dry_run
+	then
+		jfrog bt "$cmd" --user="$user" --key="$key" "$@"
+	fi
 }
 
 
 # Parse arguments
 ################################################################################
 
-while getopts t:d:D:u:k:PoC:r:p:a:Nh arg
+while getopts t:d:D:u:k:PoC:r:p:a:nNh arg
 do
 	case "$arg" in
 		t) tag="$OPTARG" ;;
@@ -138,6 +148,7 @@ do
 		r) comp_release="$OPTARG" ;;
 		p) comp_prerelease="$OPTARG" ;;
 		a) arch="$OPTARG" ;;
+		n) dry_run=true ;;
 		N) in_docker=false ;; # This was already parsed, but still
 		h) usage ; exit 0 ;;
 		\?) usage_die ;;
@@ -150,7 +161,7 @@ test "$#" -lt 1 &&
 	usage_die "You must specify FILE..."
 test -z "$tag" &&
 	usage_die "You must specify -t TAG if \$TRAVIS_TAG is not present!"
-test "$(git cat-file -t refs/tags/$tag)" != "tag" &&
+test $dry_run = false && test "$(git cat-file -t refs/tags/$tag)" != "tag" &&
 	usage_die "'$tag' should be a valid git annotated tag!"
 echo "$dest" | grep -qv '^.\+/.\+/.\+$' &&
 	usage_die "Invalid destination, please specify " \
@@ -173,8 +184,11 @@ test -z "$comp_prerelease" &&
 dest="$dest/$tag"
 
 # Check the presence of the jfrog tool
-jfrog --help > /dev/null ||
-	exit $?
+if ! $dry_run
+then
+	jfrog --help > /dev/null ||
+		exit $?
+fi
 
 
 # Create version
