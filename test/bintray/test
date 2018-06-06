@@ -1,0 +1,42 @@
+#!/bin/sh
+set -u
+
+stdout=$(mktemp beaver.test.stdout.XXXXXXXX)
+stderr=$(mktemp beaver.test.stderr.XXXXXXXX)
+expout=$(mktemp beaver.test.expout.XXXXXXXX)
+
+trap 'r=$?; rm -f "$stdout" "$stderr" "$expout"; exit $r' EXIT
+
+# Default DIST
+export DIST=xenial
+
+ret=0
+
+for f in upload/*
+do
+    echo "running $(basename "$f"): $(sed -n 1p < "$f")"
+    eval $(sed -n 1p < "$f") > "$stdout" 2> "$stderr"
+    r=$?
+
+    expected_r=$(sed -n 2p < "$f")
+    if test "$r" -ne "$expected_r"
+    then
+        echo "Error: Return is $r, expected $expected_r" >&2
+        ret=1
+    fi
+
+    if test $r -eq 0
+    then
+        out="$stdout"
+    else
+        out="$stderr"
+    fi
+
+    sed '1,2d' < "$f" > "$expout"
+    diff -u "$expout" "$out" || ret=1
+
+    test "$ret" -ne 0 &&
+        exit $ret
+done
+
+exit $ret
