@@ -10,17 +10,30 @@ d="$(dirname "$0")"
 # Copy a file only if it exist
 maybe_cp()
 {
-    if test -f "$1"
+    # Don't do anything if both src and dst are the same, or if src doesn't
+    # exist
+    if test "$(readlink -m "$1")" != "$(readlink -m "$2")" -a test -f "$1"
     then
         cp -v "$1" "$2"
     fi
 }
 
+# Store if a .dockerignore existed already
+dockerignore=false
+if test -f ".dockerignore"
+then
+    dockerignore=true
+fi
+
 # Look if a particular context was given and copy the .dockerfile from it
 if test -n "${BEAVER_DOCKER_CONTEXT:-}"
 then
-    trap 'r=$?; if test $r -eq 0 -a "${BEAVER_DEBUG:-0}" -ne 1; \
-            then rm -f .dockerignore; fi; exit $r' EXIT
+    # Only remove .dockerignore if none existed
+    if ! $dockerignore
+    then
+        trap 'r=$?; if test $r -eq 0 -a "${BEAVER_DEBUG:-0}" -ne 1; \
+                then rm -f .dockerignore; fi; exit $r' EXIT
+    fi
     maybe_cp "$BEAVER_DOCKER_CONTEXT/.dockerignore" .dockerignore
     maybe_cp "$BEAVER_DOCKER_CONTEXT/dockerignore" .dockerignore
     docker_dir="-d $BEAVER_DOCKER_CONTEXT"
