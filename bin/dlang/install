@@ -26,7 +26,7 @@ esac
 # Copy a file only if it exist
 maybe_cp()
 {
-    if test "$(readlink -m "$1")" != "$(readlink -m "$2")" -a test -f "$1"
+    if test "$(readlink -m "$1")" != "$(readlink -m "$2")" -a -f "$1"
     then
         cp -v "$1" "$2"
     fi
