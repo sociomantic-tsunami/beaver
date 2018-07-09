@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright sociomantic labs GmbH 2017.
+# Copyright dunnhumby Germany GmbH 2017.
 # Distributed under the Boost Software License, Version 1.0.
 # (See accompanying file LICENSE.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt)
@@ -12,7 +12,7 @@ maybe_cp()
 {
     # Don't do anything if both src and dst are the same, or if src doesn't
     # exist
-    if test "$(readlink -m "$1")" != "$(readlink -m "$2")" -a test -f "$1"
+    if test "$(readlink -m "$1")" != "$(readlink -m "$2")" -a -f "$1"
     then
         cp -v "$1" "$2"
     fi
