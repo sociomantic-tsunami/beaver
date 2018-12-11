@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
+# Apache License Version 2.0, January 2004
+# https://github.com/codecov/codecov-bash/blob/master/LICENSE
+
 
 set -e +o pipefail
 
-VERSION="v1.0-319-g922acae"
+VERSION="0b37652"
 
 url="https://codecov.io"
 env="$CODECOV_ENV"
@@ -24,7 +27,7 @@ ddp="$(echo ~)/Library/Developer/Xcode/DerivedData"
 xp=""
 files=""
 cacert="$CODECOV_CA_BUNDLE"
-gcov_ignore=""
+gcov_ignore="-not -path './bower_components/**' -not -path './node_modules/**' -not -path './vendor/**'"
 gcov_include=""
 
 ft_gcov="1"
@@ -33,8 +36,8 @@ ft_fix="1"
 ft_search="1"
 ft_s3="1"
 ft_network="1"
-ft_xcodellvm="0"
-ft_xcodeplist="1"
+ft_xcodellvm="1"
+ft_xcodeplist="0"
 
 _git_root=$(git rev-parse --show-toplevel 2>/dev/null || hg root 2>/dev/null || echo $PWD)
 git_root="$_git_root"
@@ -53,6 +56,7 @@ search_in_o=""
 tag_o=""
 branch_o=""
 slug_o=""
+prefix_o=""
 
 commit="$VCS_COMMIT_ID"
 branch="$VCS_BRANCH_NAME"
@@ -145,6 +149,7 @@ cat << EOF
     -G GLOB      Paths to include during gcov gathering
     -p dir       Project root directory
                  Also used when preparing gcov
+    -k prefix    Prefix filepaths to help resolve path fixing: https://github.com/codecov/support/issues/472
     -x gcovexe   gcov executable to run. Defaults to 'gcov'
     -a gcovargs  extra arguments to pass to gcov
 
@@ -170,7 +175,7 @@ cat << EOF
     -A curlargs  Extra curl arguments to communicate with AWS.
 
     -- Debugging --
-    -d           Dont upload and dump to stdout
+    -d           Don't upload, but dump upload file to stdout
     -K           Remove color from the output
     -v           Verbose mode
 
@@ -229,7 +234,7 @@ parse_yaml() {
 
 if [ $# != 0 ];
 then
-  while getopts "a:A:b:B:cC:dD:e:f:F:g:G:hJ:Kn:p:P:r:R:y:s:S:t:T:u:U:vx:X:Z" o
+  while getopts "a:A:b:B:cC:dD:e:f:F:g:G:hJ:k:Kn:p:P:r:R:y:s:S:t:T:u:U:vx:X:Z" o
   do
     case "$o" in
       "a")
@@ -298,12 +303,17 @@ $OPTARG"
         exit 0;
         ;;
       "J")
+        ft_xcodellvm="1"
+        ft_xcodeplist="0"
         if [ "$xp" = "" ];
         then
           xp="$OPTARG"
         else
           xp="$xp\|$OPTARG"
         fi
+        ;;
+      "k")
+        prefix_o=$(echo "$OPTARG" | sed -e 's:^/*::' -e 's:/*$::')
         ;;
       "K")
         b=""
@@ -389,6 +399,9 @@ $OPTARG"
         elif [ "$OPTARG" = "network" ];
         then
           ft_network="0"
+        elif [ "$OPTARG" = "s3" ];
+        then
+          ft_s3="0"
         fi
         ;;
       "y")
@@ -454,22 +467,36 @@ then
 elif [ "$CI" = "true" ] && [ "$TRAVIS" = "true" ] && [ "$SHIPPABLE" != "true" ];
 then
   say "$e==>$x Travis CI detected."
-  # http://docs.travis-ci.com/user/ci-environment/#Environment-variables
+  # https://docs.travis-ci.com/user/environment-variables/
   service="travis"
-  branch="$TRAVIS_BRANCH"
   commit="${TRAVIS_PULL_REQUEST_SHA:-$TRAVIS_COMMIT}"
   build="$TRAVIS_JOB_NUMBER"
   pr="$TRAVIS_PULL_REQUEST"
   job="$TRAVIS_JOB_ID"
   slug="$TRAVIS_REPO_SLUG"
-  tag="$TRAVIS_TAG"
   env="$env,TRAVIS_OS_NAME"
+  tag="$TRAVIS_TAG"
+  if [ "$TRAVIS_BRANCH" != "$TRAVIS_TAG" ];
+  then
+    branch="$TRAVIS_BRANCH"
+  fi
 
   language=$(printenv | grep "TRAVIS_.*_VERSION" | head -1)
   if [ "$language" != "" ];
   then
     env="$env,${language%=*}"
   fi
+
+elif [ "$DOCKER_REPO" != "" ];
+then
+  say "$e==>$x Docker detected."
+  # https://docs.docker.com/docker-cloud/builds/advanced/
+  service="docker"
+  branch="$SOURCE_BRANCH"
+  commit="$SOURCE_COMMIT"
+  slug="$DOCKER_REPO"
+  tag="$CACHE_TAG"
+  env="$env,IMAGE_NAME"
 
 elif [ "$CI" = "true" ] && [ "$CI_NAME" = "codeship" ];
 then
@@ -602,8 +629,12 @@ then
   build_url=$(urlencode "$BUILDKITE_BUILD_URL")
   slug="$BUILDKITE_PROJECT_SLUG"
   commit="$BUILDKITE_COMMIT"
+  if [[ "$BUILDKITE_PULL_REQUEST" != "false" ]]; then
+    pr="$BUILDKITE_PULL_REQUEST"
+  fi
+  tag="$BUILDKITE_TAG"
 
-elif [ "$CI" = "true" ] && [ "$DRONE" = "true" ];
+elif [ "$CI" = "drone" ] || [ "$DRONE" = "true" ];
 then
   say "$e==>$x Drone CI detected."
   # http://docs.drone.io/env.html
@@ -611,7 +642,7 @@ then
   service="drone.io"
   branch="$DRONE_BRANCH"
   build="$DRONE_BUILD_NUMBER"
-  build_url=$(urlencode "${DRONE_BUILD_URL:-$CI_BUILD_URL}")
+  build_url=$(urlencode "${DRONE_BUILD_LINK}")
   pr="$DRONE_PULL_REQUEST"
   job="$DRONE_JOB_NUMBER"
   tag="$DRONE_TAG"
@@ -654,18 +685,6 @@ then
   branch="$CI_BRANCH"
   build="$CI_BUILD_NUMBER"
   commit="$CI_COMMIT"
-
-elif [ "$CI" = "true" ] && [ "$SNAP_CI" = "true" ];
-then
-  say "$e==>$x Snap CI detected."
-  # https://docs.snap-ci.com/environment-variables/
-  service="snap"
-  branch=$([ "$SNAP_BRANCH" != "" ] && echo "$SNAP_BRANCH" || echo "$SNAP_UPSTREAM_BRANCH")
-  build="$SNAP_PIPELINE_COUNTER"
-  job="$SNAP_STAGE_NAME"
-  pr="$SNAP_PULL_REQUEST_NUMBER"
-  commit=$([ "$SNAP_COMMIT" != "" ] && echo "$SNAP_COMMIT" || echo "$SNAP_UPSTREAM_COMMIT")
-  env="$env,DISPLAY"
 
 elif [ "$SHIPPABLE" = "true" ];
 then
@@ -737,11 +756,14 @@ fi
 if [ "$commit_o" = "" ];
 then
   # merge commit -> actual commit
-  mc=$(git log -1 --pretty=%B 2>/dev/null | tr -d '[[:space:]]' || true)
-  if [[ "$mc" =~ ^Merge[[:space:]][a-z0-9]{40}[[:space:]]into[[:space:]][a-z0-9]{40}$ ]];
+  mc=
+  if [ -n "$pr" ] && [ "$pr" != false ];
   then
-    # Merge xxx into yyy
-    say "    Fixing merge commit sha"
+    mc=$(git show --no-patch --format="%P" 2>/dev/null || echo "")
+  fi
+  if [[ "$mc" =~ ^[a-z0-9]{40}[[:space:]][a-z0-9]{40}$ ]];
+  then
+    say "    Fixing merge commit SHA"
     commit=$(echo "$mc" | cut -d' ' -f2)
   elif [ "$GIT_COMMIT" != "" ];
   then
@@ -795,8 +817,9 @@ fi
 
 yaml=$(test -n "$codecov_yml" && echo "$codecov_yml" \
        || cd "$git_root" && \
-           git ls-files "*codecov.yml" "*codecov.yaml" 2>/dev/null \
+          git ls-files "*codecov.yml" "*codecov.yaml" 2>/dev/null \
        || hg locate "*codecov.yml" "*codecov.yaml" 2>/dev/null \
+       || cd $proj_root && find . -type f -name '*codecov.y*ml' -depth 1 2>/dev/null \
        || echo '')
 yaml=$(echo "$yaml" | head -1)
 
@@ -893,7 +916,7 @@ then
     if [ "$ft_gcov" = "1" ];
     then
       say "    ${e}->${x} Running $gcov_exe for Obj-C"
-      bash -c "find $ddp -type f -name '*.gcda' $gcov_include $gcov_ignore -exec $gcov_exe -pbcu $gcov_arg {} +" || true
+      bash -c "find $ddp -type f -name '*.gcda' $gcov_include $gcov_ignore -exec $gcov_exe -p $gcov_arg {} +" || true
     fi
   fi
 
@@ -939,7 +962,7 @@ then
           if [ ! -f .coverage ];
           then
             say "    ${e}->${x} Running coverage combine"
-            coverage combine
+            coverage combine -a
           fi
           say "    ${e}->${x} Running coverage xml"
           if [ "$(coverage xml -i)" != "No data to report." ];
@@ -1154,17 +1177,23 @@ then
                    -name .venvs \
                    -name venv \
                    -name venvs \
-                   -name build/lib \
                    -name .git \
                    -name .egg-info \
                    -name shunit2-2.1.6 \
                    -name vendor \
-                   -name js/generated/coverage \
                    -name __pycache__ \
                    -name node_modules \
-                   -name '$bower_components' \
+                   -path '*/$bower_components/*' \
+                   -path '*/target/delombok/*' \
+                   -path '*/build/lib/*' \
+                   -path '*/js/generated/coverage/*' \
                     \) -prune -or \
                     -type f -print 2>/dev/null || echo '')
+  fi
+
+  if [ "$prefix_o" != "" ];
+  then
+      network=$(echo "$network" | awk "{print \"$prefix_o/\"\$0}")
   fi
 fi
 
@@ -1172,7 +1201,7 @@ upload_file=`mktemp /tmp/codecov.XXXXXX`
 adjustments_file=`mktemp /tmp/codecov.adjustments.XXXXXX`
 
 cleanup() {
-    rm -f $upload_file $adjustments_file
+    rm -f $upload_file $adjustments_file $upload_file.gz
 }
 
 trap cleanup INT ABRT TERM
@@ -1221,8 +1250,26 @@ do
       then
         say "    ${g}+${x} $file ${e}bytes=$(echo "$report_len" | tr -d ' ')${x}"
         # append to to upload
-        echo "# path=$(echo "$file" | sed "s|^$git_root/||")" >> $upload_file
-        cat "$file" >> $upload_file
+        _filename=$(basename "$file")
+        if [ "${_filename##*.}" = 'gcov' ];
+        then
+          echo "# path=$(echo "$file.reduced" | sed "s|^$git_root/||")" >> $upload_file
+          # get file name
+          head -1 $file >> $upload_file
+          # 1. remove source code
+          # 2. remove ending bracket lines
+          # 3. remove whitespace
+          # 4. remove contextual lines
+          # 5. remove function names
+          awk -F': *' '{print $1":"$2":"}' $file \
+            | sed '\/: *} *$/d' \
+            | sed 's/^ *//' \
+            | sed '/^-/d' \
+            | sed 's/^function.*/func/' >> $upload_file
+        else
+          echo "# path=$(echo "$file" | sed "s|^$git_root/||")" >> $upload_file
+          cat "$file" >> $upload_file
+        fi
         echo "<<<<<< EOF" >> $upload_file
         fr=1
         if [ "$clean" = "1" ];
@@ -1298,7 +1345,7 @@ then
   if echo "$network" | grep -m1 '.go$' 1>/dev/null;
   then
     # skip empty lines, comments, and brackets
-    find "$git_root" -path "$git_root/vendor" -prune -or \
+    find "$git_root" -not -path '*/vendor/*' \
                      -type f \
                      -name '*.go' \
                      -exec \
@@ -1313,10 +1360,24 @@ then
       || echo ''
   fi
 
+  if echo "$network" | grep -m1 '.dart$' 1>/dev/null;
+  then
+    # skip brackets
+    find "$git_root" -type f \
+                     -name '*.dart' \
+                     -exec \
+      grep -nIHE \
+           -e $syntax_bracket \
+           {} \; \
+      | cut_and_join \
+      >> $adjustments_file \
+      || echo ''
+  fi
+
   if echo "$network" | grep -m1 '.php$' 1>/dev/null;
   then
     # skip empty lines, comments, and brackets
-    find "$git_root" -path "$git_root/vendor" -prune -or \
+    find "$git_root" -not -path "*/vendor/*" \
                      -type f \
                      -name '*.php' \
                      -exec \
@@ -1392,9 +1453,13 @@ fi
 if [ "$dump" != "0" ];
 then
   # trim whitespace from query
+  say "    ${e}->${x} Dumping upload file (no upload)"
   echo "$url/upload/v4?$(echo "package=bash-$VERSION&token=$token&$query" | tr -d ' ')"
   cat $upload_file
 else
+
+  say "${e}==>${x} Gzipping contents"
+  gzip -nf9 $upload_file
 
   query=$(echo "${query}" | tr -d ' ')
   say "${e}==>${x} Uploading reports"
@@ -1411,7 +1476,10 @@ else
     do
       i=$[$i+1]
       say "    ${e}->${x} Pinging Codecov"
-      res=$(curl $curl_s -X POST $curlargs $cacert "$url/upload/v4?$query" -H 'Accept: text/plain' || true)
+      res=$(curl $curl_s -X POST $curlargs $cacert \
+            -H 'X-Reduced-Redundancy: false' \
+            -H 'X-Content-Type: application/x-gzip' \
+            "$url/upload/v4?$query" || true)
       # a good replay is "https://codecov.io" + "\n" + "https://codecov.s3.amazonaws.com/..."
       status=$(echo "$res" | head -1 | grep 'HTTP ' | cut -d' ' -f2)
       if [ "$status" = "" ];
@@ -1419,10 +1487,10 @@ else
         s3target=$(echo "$res" | sed -n 2p)
         say "    ${e}->${x} Uploading"
         s3=$(curl $curl_s -fiX PUT $curlawsargs \
-                  --data-binary @$upload_file \
-                  -H 'Content-Type: text/plain' \
+                  --data-binary @$upload_file.gz \
+                  -H 'Content-Type: application/x-gzip' \
+                  -H 'Content-Encoding: gzip' \
                   -H 'x-amz-acl: public-read' \
-                  -H 'x-amz-storage-class: REDUCED_REDUNDANCY' \
                   "$s3target" || true)
         if [ "$s3" != "" ];
         then
@@ -1448,7 +1516,13 @@ else
   do
     i=$[$i+1]
 
-    res=$(curl $curl_s -X POST $curlargs $cacert --data-binary @$upload_file "$url/upload/v2?$query" -H 'Accept: text/plain' || echo 'HTTP 500')
+    res=$(curl $curl_s -X POST $curlargs $cacert \
+          --data-binary @$upload_file.gz \
+          -H 'Content-Type: text/plain' \
+          -H 'Content-Encoding: gzip' \
+          -H 'X-Content-Encoding: gzip' \
+          -H 'Accept: text/plain' \
+          "$url/upload/v2?$query" || echo 'HTTP 500')
     # HTTP 200
     # http://....
     status=$(echo "$res" | head -1 | cut -d' ' -f2)
@@ -1470,9 +1544,7 @@ else
 
   done
 
+  say "    ${r}X> Failed to upload coverage reports${x}"
 fi
 
-say "    ${r}X> Failed to upload coverage reports${x}"
 exit ${exit_with}
-
-# EOF
