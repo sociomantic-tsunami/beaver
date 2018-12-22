@@ -178,7 +178,7 @@ The `beaver install` command will automatically *inject* the appropriate
 distro name and some final instructions to copy everything in the `docker/`
 directory to the image and run the `docker/build` script so you just need to
 care to write a script to build the image (make sure it is executable). In the
-script you can always use `$(lsb_release -cs)` to the what the current Ubuntu
+script you can always use `$(lsb_release -cs)` to check what the current Ubuntu
 version is and install different packages based on that, for example.
 
 Here is a sample script:
@@ -223,7 +223,7 @@ To use multiple build contexts, you can specify the variable
 `BEAVER_DOCKER_CONTEXT` (or `--docker-context` CLI option) to point to
 a directory that will contain your `Dockerfile` or `beaver.Dockerfile` and
 possibly a `build` script (equivalent to the `docker/build` script in normal
-builds) and/or a `dockerignore` (`.dockerignore is also accepted but
+builds) and/or a `dockerignore` (`.dockerignore` is also accepted but
 `dockerignore` will take precedence), which will be copied to the current
 working directory as `.dockerignore`.
 
@@ -277,13 +277,13 @@ organization/user and `repo` is the GitHub repo name (this is obtained from
 (from `$TRAVIS_TAG`).
 
 Files are put in the debian repository `$DIST/(pre)release/ARCH` where `$DIST`
-can also be overriden via command-line arguments and if not present at all
+can also be overridden via command-line arguments and if not present at all
 defaults to `$(lsb_release -cs)`, releases are put in the `release` components
 and pre-releases (tags with a `-` as per [SemVer]() specification) in the
 `prerelease` component (unless `-C <comp>` is used, in which case the component
 will be force to be `<comp>` instead). Finally `ARCH` is the architecture and is
 calculated from the Debian package file name (normally packages end with
-`_ARCH.deb`), but can also be overriden via command-line arguments.
+`_ARCH.deb`), but can also be overridden via command-line arguments.
 
 For more options and a more in-depth description of defaults run `beaver bintray
 upload -h` for online help.
@@ -293,7 +293,7 @@ The most common way to upload files is to add this to your `.travis.yml`:
 ```yml
 deploy:
     provider: script
-    script: beaver bintray upload *.deb # Put the right locatio here
+    script: beaver bintray upload *.deb # Put the right location here
     skip_cleanup: true
     on:
         tags: true
@@ -320,7 +320,7 @@ after_success: beaver --codecov-reports="*.lst" codecov [OPTIONS]
 The `[OPTIONS]` are forwarded directly to the
 [codecov-bash](https://github.com/codecov/codecov-bash), but this script will
 run in a confined docker instance where only the coverage reports are available,
-plus the original source code as it was in Git (not the, possibly dirtly, build
+plus the original source code as it was in Git (not the, possibly dirty, build
 workspace).
 
 The docker images used to run the codecov script is determined by the standard
