@@ -17,11 +17,17 @@ $beaver make DVER=2 d2conv
 
 set -x
 
-# Commit the changes and tag
+# Configure git user
 git config user.name "$(git for-each-ref --format="%(taggername)" \
         refs/tags/$TRAVIS_TAG)"
 git config user.email "$(git for-each-ref --format="%(taggeremail)" \
         refs/tags/$TRAVIS_TAG)"
+
+# Set the repo as D2-only
+echo ONLY > .D2-ready
+git add --no-verify .D2-ready
+
+# Commit the changes and tag
 git commit --no-verify -a -m 'Auto-convert to D2'
 
 # Create the new tag
