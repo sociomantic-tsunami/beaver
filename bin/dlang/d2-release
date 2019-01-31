@@ -25,7 +25,7 @@ git config user.email "$(git for-each-ref --format="%(taggeremail)" \
 
 # Set the repo as D2-only
 echo ONLY > .D2-ready
-git add --no-verify .D2-ready
+git add .D2-ready
 
 # Commit the changes and tag
 git commit --no-verify -a -m 'Auto-convert to D2'
