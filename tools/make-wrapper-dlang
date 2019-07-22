@@ -23,7 +23,7 @@ set -eu
 beaver="${BEAVER_PATH}/bin/beaver"
 
 # No beaver? Just regular make
-if test ! -x "$beaver"
+if test ! -x "$beaver" || grep -q include: .travis.yml 2>/dev/null
 then
 	exec /usr/bin/make "$@"
 fi
