@@ -4,6 +4,12 @@ Beaver
 Beaver is a collection of scripts and utilities to keep
 [Travis](https://travis-ci.org) builds in a DRY fashion.
 
+Development Documentation
+-------------------------
+
+If you are looking to contribute to the project, there is also a document
+describing the [internals](INTERNALS.md).
+
 Features
 --------
 
