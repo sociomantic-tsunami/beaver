@@ -9,6 +9,41 @@
 #
 # . lib/dlang.sh
 
+# Print the Debian package name (with version specification) to install
+# based on DMD version.
+# $1 is the DMD version description.
+# $2 is the DIST ubuntu version.
+# If DMD starts with dmd, it will print nothing, assuming the default
+#        installed packages will be used
+# If DMD is 1.* it will print dmd1=$1-$2
+# If DMD is 2.*.s*, it will print dmd-transitional=$1-$2
+# If DMD is 2.* it will print dmd-compiler=$1 or dmd-bin=$1 depending on
+#        $1 (to accomodate to a package name change) and some extra
+#        packages, like libphobos2-dev and dmd-tools
+# If DMD has another shape, it will print an error to stderr, nothing to
+# stdout and exit.
+get_d_pkg() {
+    old_opts=$-
+    set -eu
+
+    DMD="$1"
+    DIST="$2"
+
+    case "$DMD" in
+        dmd*   ) echo "" ;;
+        1.*    ) echo "dmd1=$DMD-$DIST" ;;
+        2.*.s* ) echo "dmd-transitional=$DMD-$DIST" ;;
+        2.*    ) if [ $(echo $DMD | cut -d. -f2) -ge 077 ]; then
+                    echo "dmd-compiler=$DMD dmd-tools=$DMD libphobos2-dev=$DMD"
+                 else
+                    echo "dmd-bin=$DMD libphobos2-dev=$DMD"
+                 fi ;;
+        *      ) echo "Unknown \$DMD ($DMD)" >&2; exit 1 ;;
+    esac
+
+    set -$old_opts
+}
+
 # Sets the DC and DVER environment variables based on the DMD environment
 # variable, if present. The DMD variable is expected to hold the DMD version to
 # use:
