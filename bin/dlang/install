@@ -9,18 +9,7 @@ set -eu
 
 beaver=$(dirname $0)/../beaver
 
-# Package name deduced based on supplied DMD version
-case "$DMD" in
-    dmd*   ) PKG= ;;
-    1.*    ) PKG="dmd1=$DMD-$DIST" ;;
-    2.*.s* ) PKG="dmd-transitional=$DMD-$DIST" ;;
-    2.*    ) if [ $(echo $DMD | cut -d. -f2) -ge 077 ]; then
-                PKG="dmd-compiler=$DMD dmd-tools=$DMD libphobos2-dev=$DMD"
-             else
-                PKG="dmd-bin=$DMD libphobos2-dev=$DMD"
-             fi ;;
-    *      ) echo "Unknown \$DMD ($DMD)" >&2; exit 1 ;;
-esac
+. $(dirname $0)/../../lib/dlang.sh
 
 # FIXME: Use beaver install for this for consistency and DRY
 # Copy a file only if it exist
@@ -63,7 +52,7 @@ fi
         -o beaver.Dockerfile.generated
 
 # Build the docker image from the generated Dockerfile passing DMD_PKG
-"$beaver" docker build --build-arg "DMD_PKG=$PKG" \
+"$beaver" docker build --build-arg "DMD_PKG=$(get_d_pkg "$DMD" "$DIST")" \
         -f beaver.Dockerfile.generated "$@" .
 
 if test "${BEAVER_DEBUG:-0}" -ne 1
